@@ -140,6 +140,9 @@ public abstract class LivePhotoConv.LiveMaker : Object {
     */
     public void export () throws Error {
         int64 video_size = 0;
+        // Only video/mp4 and video/quicktime are valid, so the declaration has
+        // to match the source container
+        var video_mime = Utils.detect_video_mime (this.video_path);
         if (this.main_image_path != null) {
             video_size = this.export_with_main_image ();
         } else {
@@ -190,8 +193,8 @@ public abstract class LivePhotoConv.LiveMaker : Object {
         this.metadata.set_tag_string ("Xmp.Container.Directory[1]/Container:Item/Item:Semantic", "Primary");
         // Item:Padding is optional for JPEG, so we omit it or can set to "0"
         // this.metadata.set_tag_string ("Xmp.Container.Directory[1]/Container:Item/Item:Padding", "0");
-        // Item 2: Video (assuming MP4)
-        this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Mime", "video/mp4");
+        // Item 2: Video, declared as whatever container the source actually is
+        this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Mime", video_mime);
         this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Semantic", "MotionPhoto");
         this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Length", video_size.to_string ());
 

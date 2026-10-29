@@ -603,8 +603,9 @@ public abstract class LivePhotoConv.LivePhoto : Object {
         // Metadata repair is intentionally limited to JPEG appended layouts.
         this.metadata.set_tag_string ("Xmp.Container.Directory[1]/Container:Item/Item:Mime", "image/jpeg");
         this.metadata.set_tag_string ("Xmp.Container.Directory[1]/Container:Item/Item:Semantic", "Primary");
-        // Item 2: Video (MP4)
-        this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Mime", "video/mp4");
+        // Item 2: Video, declared as whatever container the appended bytes are
+        this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Mime",
+                                      Utils.detect_video_mime (this.filename, this.video_offset));
         this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Semantic", "MotionPhoto");
         try {
             this.metadata.clear_tag ("Xmp.Container.Directory[2]/Container:Item/Item:Length");
