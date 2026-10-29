@@ -269,3 +269,11 @@ msgstr "修复预检失败。未修改任何文件。"
 
 #~ msgid "Live Photo Converter"
 #~ msgstr "动态照片转换器"
+
+#: src/gui.vala
+msgid "Target device"
+msgstr "目标设备"
+
+#: src/gui.vala
+msgid "Adds the vendor specific XMP fields that OPPO and vivo galleries need"
+msgstr "写入 OPPO 与 vivo 相册需要的厂商私有 XMP 字段"

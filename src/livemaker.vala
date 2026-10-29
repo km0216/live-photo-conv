@@ -18,6 +18,43 @@
 */
 
 /**
+ * Target vendor flavour of the Container/Camera XMP metadata.
+ *
+ * Google is the open standard (Pixel, Samsung, plus every reader that follows
+ * it). OPPO and vivo only render the motion part when their own private
+ * namespace is present next to the Google one. Xiaomi reads the retired
+ * MicroVideo V1 tags and writes no MotionPhoto node at all.
+ */
+public enum LivePhotoConv.Brand {
+    GOOGLE,
+    OPPO,
+    VIVO,
+    XIAOMI;
+
+    public static Brand from_string (string? name) {
+        if (name == null || name == "")
+            return GOOGLE;
+        switch (name.down ()) {
+            case "oppo":
+            case "oplus":
+            case "oneplus":
+            case "coloros":
+                return OPPO;
+            case "vivo":
+            case "iqoo":
+            case "originos":
+                return VIVO;
+            case "xiaomi":
+            case "redmi":
+            case "hyperos":
+                return XIAOMI;
+            default:
+                return GOOGLE;
+        }
+    }
+}
+
+/**
  * Live photo maker base class.
  *
  * Provides functionality to create a live photo by combining an optional main image 
@@ -29,6 +66,12 @@ public abstract class LivePhotoConv.LiveMaker : Object {
     protected string? main_image_path = null;
     protected string video_path;
     protected string dest;
+
+    public Brand brand {
+        get;
+        set;
+        default = Brand.GOOGLE;
+    }
 
     public bool make_backup {
         get;
@@ -173,7 +216,9 @@ public abstract class LivePhotoConv.LiveMaker : Object {
         this.metadata.set_tag_string ("Xmp.GCamera.MicroVideoOffset", video_size.to_string ());
         this.metadata.set_tag_string ("Xmp.GCamera.MicroVideoPresentationTimestampUs", presentation_timestamp_us_to_write);
 
-        // Set MotionPhoto (new standard) tags
+        // The MotionPhoto V2 set. Xiaomi reads only the MicroVideo V1 tags and
+        // real Xiaomi files carry no MotionPhoto node, so skip it for that brand.
+        if (this.brand != Brand.XIAOMI) {
         this.metadata.set_tag_string ("Xmp.GCamera.MotionPhoto", "1");
         this.metadata.set_tag_string ("Xmp.GCamera.MotionPhotoVersion", "1");
         this.metadata.set_tag_string ("Xmp.GCamera.MotionPhotoPresentationTimestampUs", presentation_timestamp_us_to_write);
@@ -190,6 +235,28 @@ public abstract class LivePhotoConv.LiveMaker : Object {
         this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Mime", "video/mp4");
         this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Semantic", "MotionPhoto");
         this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Length", video_size.to_string ());
+        }
+
+        // Vendor extensions: OPPO and vivo only render the motion part when
+        // their own namespace is present alongside the Google one.
+        switch (this.brand) {
+            case Brand.OPPO:
+                GExiv2.Metadata.register_xmp_namespace ("http://ns.oplus.com/photos/1.0/camera/", "OpCamera");
+                this.metadata.set_tag_string ("Xmp.OpCamera.MotionPhotoPrimaryPresentationTimestampUs", presentation_timestamp_us_to_write);
+                this.metadata.set_tag_string ("Xmp.OpCamera.MotionPhotoOwner", "oplus");
+                this.metadata.set_tag_string ("Xmp.OpCamera.OLivePhotoVersion", "2");
+                this.metadata.set_tag_string ("Xmp.OpCamera.VideoLength", video_size.to_string ());
+                break;
+            case Brand.VIVO:
+                GExiv2.Metadata.register_xmp_namespace ("http://ns.vivo.com/photos/1.0/camera/", "VCamera");
+                this.metadata.set_tag_string ("Xmp.VCamera.VMotionPhotoVersion", "1");
+                this.metadata.set_tag_string ("Xmp.VCamera.VMotionPhotoSource", "1");
+                this.metadata.set_tag_string ("Xmp.VCamera.VMediaKitVersion", "1");
+                break;
+            default:
+                // Google and Xiaomi need nothing beyond the blocks above
+                break;
+        }
 
         try {
             this.metadata.save_file (this.dest);

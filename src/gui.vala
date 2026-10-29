@@ -230,6 +230,7 @@ public class LivePhotoConv.Application : Adw.Application {
     private FileDropArea make_video_area;
     private FileDropArea make_image_area;
     private Gtk.CheckButton make_export_metadata_check;
+    private Gtk.DropDown make_brand_dropdown;
     private Gtk.Button make_button;
 
     // Extract page
@@ -540,6 +541,24 @@ public class LivePhotoConv.Application : Adw.Application {
         return row;
     }
 
+    private Adw.ActionRow make_brand_row (out Gtk.DropDown out_drop) {
+        // Index order must follow the Brand enum: google, oppo, vivo, xiaomi
+        var drop = new Gtk.DropDown.from_strings ({
+            "Google / Android", "OPPO / OnePlus", "vivo / iQOO", "Xiaomi / Redmi",
+        }) {
+            valign = Gtk.Align.CENTER,
+            tooltip_text = _("Adds the vendor specific XMP fields that OPPO and vivo galleries need"),
+        };
+        drop.selected = 0;
+        out_drop = drop;
+        var row = new Adw.ActionRow () {
+            title = _("Target device"),
+            activatable = false,
+        };
+        row.add_suffix (drop);
+        return row;
+    }
+
     private Adw.ActionRow make_entry_row (string title, out Gtk.Entry entry, string placeholder) {
         entry = new Gtk.Entry () {
             placeholder_text = placeholder,
@@ -613,6 +632,7 @@ public class LivePhotoConv.Application : Adw.Application {
 
         var options_group = make_group (_("Options"));
         make_export_metadata_check = null;
+        options_group.add (make_brand_row (out make_brand_dropdown));
         options_group.add (make_check_row (_("Export metadata"), out make_export_metadata_check, true));
         box.append (options_group);
 
@@ -625,7 +645,7 @@ public class LivePhotoConv.Application : Adw.Application {
 
         var dialog = new Gtk.FileDialog () {
             title = _("Save Live Photo As"),
-            initial_name = "MVIMG_live_photo.jpg",
+            initial_name = "MVIMG_live_photoMP.jpg",
         };
         dialog.save.begin (active_window, null, (obj, res) => {
             try {
@@ -652,6 +672,7 @@ public class LivePhotoConv.Application : Adw.Application {
                 }
                 bool export_metadata = make_export_metadata_check.active;
                 maker.export_original_metadata = export_metadata;
+                maker.brand = (Brand) make_brand_dropdown.selected;
 
                 start_work (make_button, _("Processing…"));
 
