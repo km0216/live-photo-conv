@@ -1171,10 +1171,6 @@ public class LivePhotoConv.Application : Adw.Application {
      * @return exit code
      */
     public static int main (string[] args) {
-        // Prefer Chinese UI regardless of the system locale. LANGUAGE is read by
-        // gettext after setlocale(), so it has to be set first.
-        if (Environment.get_variable ("LANGUAGE") == null)
-            Environment.set_variable ("LANGUAGE", "zh_CN", true);
         Intl.setlocale (LocaleCategory.ALL, "");
         Intl.bindtextdomain (GETTEXT_PACKAGE, Utils.get_localedir ());
         Intl.bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");

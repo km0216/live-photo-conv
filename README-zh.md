@@ -433,6 +433,5 @@ live-photo-conv --make --image /path/to/dest.jpg --video /path/to/video.mp4 --li
 
 - 窗口固定 570×810，不能拖大、没有最大化按钮
 - 「结果」里显示预计输出大小（视频字节数 + 静态图）
-- 默认中文界面，不看系统语言
 
 已向上游提交 PR [#85](https://github.com/wszqkzqk/live-photo-conv/pull/85)（合规）和 [#86](https://github.com/wszqkzqk/live-photo-conv/pull/86)（目标设备）。

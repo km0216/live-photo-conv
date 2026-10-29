@@ -443,6 +443,5 @@ Field names come from real device output, not from guessing. Xiaomi files carry 
 
 - Fixed 570×810 window, not resizable, no maximise button
 - Estimated output size row (video bytes + still image)
-- Chinese UI by default, regardless of the system locale
 
 Filed upstream as PR [#85](https://github.com/wszqkzqk/live-photo-conv/pull/85) (compliance) and [#86](https://github.com/wszqkzqk/live-photo-conv/pull/86) (target device).
