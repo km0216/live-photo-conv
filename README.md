@@ -8,6 +8,8 @@
 
 * [中文版本](README-zh.md)
 
+> **Fork notes** — this branch carries a few changes on top of 0.51.0, see "Changes in this fork" at the end.
+
 Live Photo Converter is a cross-platform tool for processing live photos, providing an easy-to-use and modern GUI based on GTK4 / LibAdwaita, CLI, and function library.
 
 It can combine a static image and a video into a live photo, convert a video directly into a live photo, repair live photos that fail to parse due to broken metadata, extract the static image and video from a live photo, or export every frame of the video as an image, and supports converting live photos to long exposure photos.
@@ -411,3 +413,36 @@ This project uses [Meson](https://mesonbuild.com/) as the build system and is pr
 Translations are managed on [Hosted Weblate](https://hosted.weblate.org/projects/live-photo-conv/). Please use Weblate rather than opening pull requests for translation changes.
 
 [![Translation status](https://hosted.weblate.org/widget/live-photo-conv/multi-auto.svg)](https://hosted.weblate.org/projects/live-photo-conv/)
+## Changes in this fork
+
+A few adjustments on top of 0.51.0. They are listed here because upstream may not take all of them.
+
+### Motion Photo 1.0 compliance
+
+The spec's reader pattern requires the file name stem to end with `MP`, and `Item:Mime` may only be `video/mp4` or `video/quicktime`. The original code satisfied neither:
+
+- Output name is `MVIMG_<stem>MP.jpg` instead of `MVIMG_<stem>.jpg`
+- `Item:Mime` is probed from the source `ftyp` brand, `.mov` becomes `video/quicktime` (same in the repair path)
+- `MotionPhotoPresentationTimestampUs` is written as `0` instead of `-1` — camera files always carry a value, and some galleries skip the motion badge on `-1`
+- Unreadable source metadata now warns instead of aborting the export
+
+### Target device
+
+`--brand` on the command line, "Target device" in the GUI:
+
+| Value | Extra nodes |
+|---|---|
+| `google` (default) | none, standard Motion Photo 1.0 + MicroVideo V1 |
+| `oppo` | `OpCamera`: `MotionPhotoOwner="oplus"`, `OLivePhotoVersion="2"`, `VideoLength`, … |
+| `vivo` | `VCamera`: `VMotionPhotoVersion`, `VMotionPhotoSource`, `VMediaKitVersion` |
+| `xiaomi` | MicroVideo V1 only, no MotionPhoto / Container nodes |
+
+Field names come from real device output, not from guessing. Xiaomi files carry no `Camera:MotionPhoto` node at all.
+
+### Interface
+
+- Fixed 570×810 window, not resizable, no maximise button
+- Estimated output size row (video bytes + still image)
+- Chinese UI by default, regardless of the system locale
+
+Filed upstream as PR [#85](https://github.com/wszqkzqk/live-photo-conv/pull/85) (compliance) and [#86](https://github.com/wszqkzqk/live-photo-conv/pull/86) (target device).
