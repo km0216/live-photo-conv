@@ -6,60 +6,60 @@
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wszqkzqk/live-photo-conv)
 
-* [中文版本](README-zh.md)
+* [English Version](README.en.md)
 
-> **Fork notes** — this branch carries a few changes on top of 0.51.0, see "Changes in this fork" at the end.
+> **本分支的改动**（基于 0.51.0，见下方「本 fork 的改动」）
 
-Live Photo Converter is a cross-platform tool for processing live photos, providing an easy-to-use and modern GUI based on GTK4 / LibAdwaita, CLI, and function library.
+Live Photo Converter 是一个用于处理动态照片的跨平台的工具，提供了基于 GTK4 / LibAdwaita 的现代化的图形界面、命令行工具与函数库。
 
-It can combine a static image and a video into a live photo, convert a video directly into a live photo, repair live photos that fail to parse due to broken metadata, extract the static image and video from a live photo, or export every frame of the video as an image, and supports converting live photos to long exposure photos.
+它可以将静态图像和视频合成为动态照片，直接将视频转化为动态照片，修复受损的动态照片，或者从动态照片中提取静态图像和视频，还可以将视频的每一帧导出为图片，并支持将动态照片转换为长曝光照片。
 
-## Features
+## 功能
 
 - `live-photo-conv-gtk`
-  - **Graphical interface** for making, extracting and repairing live photos (GTK4 / LibAdwaita)
+  - **图形界面**（GTK4 / LibAdwaita）程序，全面支持制作、提取和修复动态照片
 - `live-photo-make`
-  - **Create** live photos from images and videos
+  - 从图片和视频**创建**动态照片
 - `live-photo-extract`
-  - Extract images, videos, and **video frames** from live photos
-  - Convert live photos to **long exposure photos**
+  - 从动态照片中提取图片、视频和**视频帧**
+  - 将动态照片转换为**长曝光照片**
 - `live-photo-repair`
-  - **Repair** corrupted live photos
+  - **修复**损坏的动态照片
 - `live-photo-conv`
-  - A comprehensive command for creating, extracting, converting, and repairing live photos
+  - 功能全面的通用命令，用于创建、提取、转换和修复动态照片
 - `copy-img-meta`
-  - Copy metadata from one image to another
-  - Choose whether to include or exclude EXIF, XMP, and IPTC metadata
+  - 从一张图片复制元数据到另一张图片
+  - 可以选择复制或排除 EXIF、XMP、IPTC 元数据
 - `liblivephototools`
-  - A library that provides functions for creating and extracting live photos, as well as exporting frames from videos
-  - The library can be used in **any** language that supports **GObject Introspection**
+  - 一个可用于创建和提取动态照片以及从内嵌视频中导出帧的库
+  - 可以在支持 **GObject Introspection** 的**任何**语言中使用
 
-## Background [(Chinese Introduction)](https://wszqkzqk.github.io/2024/08/01/%E8%A7%A3%E6%9E%90Android%E7%9A%84%E5%8A%A8%E6%80%81%E7%85%A7%E7%89%87/)
+## [背景](https://wszqkzqk.github.io/2024/08/01/%E8%A7%A3%E6%9E%90Android%E7%9A%84%E5%8A%A8%E6%80%81%E7%85%A7%E7%89%87/)
 
-Android live photos are a gradually popularizing media file format that combines a video with audio and a static image to form a live photo. This type of photo is supported on various devices, such as Google's Pixel series, Samsung's Galaxy series, and most models from manufacturers like Xiaomi.
+Android 的动态照片是一种逐渐普及的媒体文件格式，它可以将包含音频的视频与静态图片结合在一起，形成一个动态的照片。这种照片已经在多种机型上得到了支持，例如 Google 的 Pixel 系列、三星的 Galaxy 系列，以及小米等厂商的大部分机型。
 
-In the common JPEG-based form, an Android live photo appends a video file directly to the end of a static image. This video file contains both audio and video streams. The position of the video file is marked using `XMP` metadata, allowing quick location of the video file during parsing. The advantage of this format is that it adds dynamic effects to the image without altering the original image. Since this extension is not a standard for image formats, such images will only be displayed as static images in unsupported image viewers. The Android Motion Photo specification also defines an `mpvd` box for ISOBMFF images such as HEIC and AVIF. Samsung uses this structure and may add vendor-specific `sefd` metadata.
+常见的 JPEG 格式 Android 动态照片是在静态图片的末尾直接附加一个包含音频与视频流的视频文件。其中，视频文件的位置使用 `XMP` 元数据进行标记，这样在解析时可以快速找到视频文件的位置。这种格式的好处是可以在不改变原有图片的情况下，为图片添加动态效果。由于这一拓展并非图片格式的标准，因此在不支持的图片查看器上，这种图片只能被当作静态图片显示。Android Motion Photo 规范还为 HEIC、AVIF 等 ISOBMFF 图像定义了 `mpvd` box。三星也采用这一结构，并可能附加厂商特有的 `sefd` 元数据。
 
-This tool can be used for extracting, repairing, editing, and composing such live photos.
+本工具可以用于这种动态照片的提取、修复、编辑与合成等操作。
 
-## Easy Installation
+## 便捷安装
 
-### Android (Experimental)
+### Android（实验性）
 
-Download the APK for your device's ABI from [GitHub Releases](https://github.com/wszqkzqk/live-photo-conv/releases) and install it (you may need to allow your browser or file manager to install apps from unknown sources):
+从 [GitHub Releases](https://github.com/wszqkzqk/live-photo-conv/releases) 下载对应设备 ABI 的 APK 并安装（可能需要允许浏览器或文件管理器"安装未知来源应用"）：
 
 * `*-android-arm64-v8a.apk`
-  * Most modern phones and tablets
+  * 绝大多数现代手机和平板
 * `*-android-x86_64.apk`
-  * x86 devices and emulators
+  * x86 设备和模拟器
 * `*-android-universal.apk`
-  * Works on all supported ABIs, but larger in size
+  * 通用包，适用于所有支持的 ABI，但体积更大
 
-On Android, only the graphical interface is provided, and video processing is handled by a statically linked GStreamer backend. Android 12 or later is required.
+Android 平台仅提供图形界面，视频处理由静态链接的 GStreamer 后端完成。需要 Android 12 及以上版本。
 
 ### Windows (MSYS2)
 
-For Windows users, [the package](https://packages.msys2.org/base/mingw-w64-live-photo-conv) is already available in the **[MSYS2 official repository](https://www.msys2.org/)**. Make sure you have MSYS2 installed and updated, then you can install it directly with `pacman` (UCRT64 as an example):
+对于 Windows 用户，现在 **[MSYS2](https://www.msys2.org/) 官方仓库**中已经包含了[该软件包](https://packages.msys2.org/base/mingw-w64-live-photo-conv)，确保已经安装并更新了 MSYS2 后，可以直接使用 `pacman` 进行安装（以 UCRT64 环境为例）：
 
 ```bash
 pacman -S mingw-w64-ucrt-x86_64-live-photo-conv
@@ -67,13 +67,13 @@ pacman -S mingw-w64-ucrt-x86_64-live-photo-conv
 
 ### Arch Linux
 
-On Arch Linux, you can install directly from the AUR using an AUR helper like `paru`:
+Arch Linux 可以直接从 AUR 安装，例如使用 AUR 助手 `paru`：
 
 ```bash
 paru -S live-photo-conv
 ```
 
-Alternatively, you can manually clone the AUR repository and build/install:
+也可以手动克隆 AUR 仓库并构建、安装：
 
 ```bash
 git clone https://aur.archlinux.org/live-photo-conv.git
@@ -83,13 +83,13 @@ makepkg -si
 
 ### Flatpak
 
-Download the `.flatpak` bundle from [GitHub Releases](https://github.com/wszqkzqk/live-photo-conv/releases) and install (recommended):
+从 [GitHub Releases](https://github.com/wszqkzqk/live-photo-conv/releases) 下载 `.flatpak` 包并安装（推荐）：
 
 ```bash
 flatpak install --user live-photo-conv*.flatpak
 ```
 
-To build directly from source with flatpak-builder:
+使用 flatpak-builder 从源码构建：
 
 ```bash
 git clone https://github.com/wszqkzqk/live-photo-conv.git
@@ -101,182 +101,176 @@ flatpak run com.github.wszqkzqk.live-photo-conv
 
 ### macOS (Homebrew)
 
-On macOS, install from this repository as a Homebrew tap:
+macOS 可以将本仓库作为 Homebrew tap 安装：
 
 ```bash
 brew tap wszqkzqk/live-photo-conv https://github.com/wszqkzqk/live-photo-conv
 HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew install --HEAD wszqkzqk/live-photo-conv/live-photo-conv
 ```
 
-## Manual Build
+## 手动构建
 
-### Dependencies
+### 依赖
 
-* Build Dependencies
-  * Meson, Vala, GExiv2
-  * GTK4, LibAdwaita (optional, for the GUI)
-  * GStreamer (`gstreamer`, `gst-plugins-base-libs`) — optional, for exporting images from videos; FFmpeg used otherwise
-  * gdk-pixbuf2 — optional, same as above
-  * gobject-introspection — optional, for generating GObject Introspection data
-* Runtime Dependencies
-  * GLib (GObject, GIO), GExiv2
-  * GTK4, LibAdwaita (required by the GUI)
-  * GStreamer (`gstreamer`, `gst-plugins-base-libs`, `gst-plugins-good`, `gst-plugins-bad`) — required when built with GStreamer; `gst-plugin-va` optional, for hardware acceleration
-  * gdk-pixbuf2 — required when built with GStreamer; optional format loaders: `libavif` (.avif), `libheif` (.heif/.heic/.avif), `libjxl` (.jxl), `webp-pixbuf-loader` (.webp)
-  * FFmpeg (8.0 or later) — optional, required when not built with GStreamer and need to export images from videos
+* 构建依赖
+  * Meson、Vala、GExiv2
+  * GTK4、LibAdwaita（可选，GUI 需要）
+  * GStreamer（`gstreamer`, `gst-plugins-base-libs`）— 可选，用于从视频导出图片，否则使用 FFmpeg
+  * gdk-pixbuf2 — 可选，同上
+  * gobject-introspection — 可选，用于生成 GObject Introspection 信息
+* 运行依赖
+  * GLib（GObject, GIO）、GExiv2
+  * GTK4、LibAdwaita（GUI 需要）
+  * GStreamer（`gstreamer`, `gst-plugins-base-libs`, `gst-plugins-good`, `gst-plugins-bad`）— GStreamer 构建时需要；`gst-plugin-va` 可选，用于硬件加速
+  * gdk-pixbuf2 — GStreamer 构建时需要；可选格式加载器：`libavif` (.avif)、`libheif` (.heif/.heic/.avif)、`libjxl` (.jxl)、`webp-pixbuf-loader` (.webp)
+  * FFmpeg（8.0 及以上）— 可选，未使用 GStreamer 构建时从视频导出图片需要
 
-For example, to install dependencies on Arch Linux:
+例如，在Arch Linux上安装依赖：
 
 ```bash
 sudo pacman -S --needed glib2 gexiv2 meson vala gtk4 libadwaita gstreamer gst-plugins-base-libs gdk-pixbuf2 gobject-introspection gst-plugins-good gst-plugins-bad gst-plugin-va
 ```
 
-To install dependencies on Debian/Ubuntu:
+在Debian/Ubuntu上安装依赖：
 
 ```bash
 sudo apt install build-essential meson valac libgexiv2-dev libglib2.0-dev libgtk-4-dev libadwaita-1-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgdk-pixbuf-2.0-dev gobject-introspection libgirepository1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-vaapi
 ```
 
-To install dependencies on macOS with Homebrew:
+在 macOS 上使用 Homebrew 安装依赖：
 
 ```bash
 brew install meson vala pkgconf glib gexiv2 gtk4 libadwaita adwaita-icon-theme gstreamer gdk-pixbuf gobject-introspection ffmpeg help2man
 ```
 
-To install dependencies on Windows by MSYS2 (UCRT64 environment):
+在Windows的MSYS2（UCRT64）环境上安装依赖：
 
 ```bash
-pacman -S --needed mingw-w64-ucrt-x86_64-glib2 mingw-w64-ucrt-x86_64-cc  mingw-w64-ucrt-x86_64-gexiv2 mingw-w64-ucrt-x86_64-meson mingw-w64-ucrt-x86_64-vala mingw-w64-ucrt-x86_64-gtk4 mingw-w64-ucrt-x86_64-libadwaita mingw-w64-ucrt-x86_64-gstreamer mingw-w64-ucrt-x86_64-gst-plugins-base mingw-w64-ucrt-x86_64-gdk-pixbuf2 mingw-w64-ucrt-x86_64-gobject-introspection mingw-w64-ucrt-x86_64-gst-plugins-good mingw-w64-ucrt-x86_64-gst-plugins-bad
+pacman -S --needed mingw-w64-ucrt-x86_64-glib2 mingw-w64-ucrt-x86_64-cc mingw-w64-ucrt-x86_64-gexiv2 mingw-w64-ucrt-x86_64-meson mingw-w64-ucrt-x86_64-vala mingw-w64-ucrt-x86_64-gtk4 mingw-w64-ucrt-x86_64-libadwaita mingw-w64-ucrt-x86_64-gstreamer mingw-w64-ucrt-x86_64-gst-plugins-base mingw-w64-ucrt-x86_64-gdk-pixbuf2 mingw-w64-ucrt-x86_64-gobject-introspection mingw-w64-ucrt-x86_64-gst-plugins-good mingw-w64-ucrt-x86_64-gst-plugins-bad
 ```
 
-### Compilation
+### 编译
 
-Use Meson and Ninja to build the project. When configuring the build with Meson, it automatically detects whether GStreamer is supported and whether GObject Introspection information can be generated.
+使用 Meson 和 Ninja 构建项目，使用 Meson 配置构建时默认自动检测是否支持 GStreamer 与是否可以生成GObject Introspection 信息。
 
-Meson build options:
+Meson 构建选项：
 
 * `gst`
-  * Whether to enable GStreamer
-  * Possible values are `auto`, `enabled`, `disabled`. Default is `auto`.
+  * 是否启用 GStreamer
+  * 可选值为 `auto`、`enabled`、`disabled`，默认为 `auto`
 * `gir`
-  * Whether to generate GObject Introspection information
-  * Possible values are `auto`, `enabled`, `disabled`. Default is `auto`.
+  * 是否生成 GObject Introspection 信息
+  * 可选值为 `auto`、`enabled`、`disabled`，默认为 `auto`
 * `gui`
-  * Whether to build the GTK4/LibAdwaita GUI
-  * Possible values are `auto`, `enabled`, `disabled`. Default is `auto`.
+  * 是否构建 GTK4/LibAdwaita 图形界面
+  * 可选值为 `auto`、`enabled`、`disabled`，默认为 `auto`
 * `docs`
-  * Whether to generate documentation
-  * Possible values are `auto`, `enabled`, `disabled`. Default is `auto`.
+  * 是否在 GObject Introspection 信息中生成文档
+  * 可选值为 `auto`、`enabled`、`disabled`，默认为 `auto`
 * `manpages`
-  * Whether to generate manpages
-  * Possible values are `auto`, `enabled`, `disabled`. Default is `auto`.
+  * 是否生成 man 手册
+  * 可选值为 `auto`、`enabled`、`disabled`，默认为 `auto`
 
-First, you need to clone the project and navigate to the top-level directory of the project. The following reference commands should be executed in the **top-level directory of the project**:
+首先需要克隆项目并进入项目顶级目录，后续给出的参考命令均需要在**项目顶级目录**下执行：
 
 ```bash
 git clone https://github.com/wszqkzqk/live-photo-conv.git
 cd live-photo-conv
 ```
 
-You can configure the build with the following command:
+可以通过以下命令配置构建：
 
 ```bash
 meson setup builddir --buildtype=release
 ```
 
-If you do not want to generate GObject Introspection information, for example, you can disable it with the following command:
+可以使用 Meson 构建选项配置构建，例如，如果不想生成 GObject Introspection 信息，可以使用以下命令：
 
 ```bash
 meson setup builddir --buildtype=release -D gir=disabled
 ```
 
-Then compile the project:
+然后编译项目：
 
 ```bash
 meson compile -C builddir
 ```
 
-Install the project:
+安装项目：
 
 ```bash
 meson install -C builddir
 ```
 
-## Usage
+## 使用
 
-### `live-photo-conv-gtk` (GUI)
+### `live-photo-conv-gtk`（图形界面）
 
-The graphical interface provides an intuitive way to make, extract and repair live photos without using the command line. Launch it from your application launcher or terminal:
+图形界面提供了直观的方式来制作、提取和修复动态照片，无需使用命令行。从应用启动器或终端启动：
 
 ```bash
 live-photo-conv-gtk
 ```
 
-Three tabs cover all operations:
+三个标签页覆盖所有操作：
 
-* **Make** — combine a video (and optional image) into a live photo. Drag files or click to browse, then click the button to choose where to save.
+* **Make** — 将视频及主图片合成为动态照片。可拖放文件或点击浏览，然后点击按钮选择保存位置。
 
-  <p align="center"><img src="screenshots/make-ui.webp" alt="Make tab" width="300" /></p>
+  <p align="center"><img src="screenshots/make-ui.webp" alt="合成动态照片" width="300" /></p>
 
-* **Extract** — select a live photo, tick what to export (main image, video, long exposure, frames), choose an output directory. Supports **batch processing** of multiple live photos.
+* **Extract** — 选择动态照片，勾选要导出的内容（主图片、视频、长曝光、逐帧），选择输出目录。支持**批量处理**多个动态照片。
 
-  <p align="center"><img src="screenshots/extract-ui.webp" alt="Extract tab" width="300" /></p>
+  <p align="center"><img src="screenshots/extract-ui.webp" alt="提取模式" width="300" /></p>
 
-* **Repair** — fix corrupted XMP metadata in a live photo. Advanced options for manual video size are available if needed. Supports **batch processing** of multiple live photos.
+* **Repair** — 修复动态照片中损坏的 XMP 元数据。如有需要，可展开高级选项手动指定视频大小。支持**批量处理**多个动态照片。
 
-  <p align="center"><img src="screenshots/repair-ui.webp" alt="Repair tab" width="300" /></p>
+  <p align="center"><img src="screenshots/repair-ui.webp" alt="修复模式" width="300" /></p>
 
-### CLI Tools
+### CLI 工具
 
-To simplify common tasks, this project provides three streamlined command-line tools, which are symbolic links to `live-photo-conv` but offer a more concise and focused set of options for specific tasks:
+为了方便常见操作，此项目提供了几个命令行工具。运行任意命令加 `--help` 可查看所有可用选项：
 
-* `live-photo-make`: Create live photos from images and videos.
-* `live-photo-extract`: Extract images, videos, and video frames from live photos.
-* `live-photo-repair`: Repair corrupted live photos.
-* `live-photo-conv`: A comprehensive command for all features.
-* `copy-img-meta`: Copy metadata between images.
-
-Run any command with `--help` to see all available options.
+* `live-photo-make`：创建动态照片。
+* `live-photo-extract`：提取图片、视频和视频帧。
+* `live-photo-repair`：修复损坏的动态照片。
+* `live-photo-conv`：功能全面的通用命令。
+* `copy-img-meta`：复制图片元数据。
 
 #### `live-photo-make`
-
-Create a live photo:
 
 ```bash
 live-photo-make -i /path/to/image.jpg -m /path/to/video.mp4 -o /path/to/output.jpg
 ```
 
-Convert a video directly to a live photo:
+将视频直接转化为动态照片：
 
 ```bash
 live-photo-make -m /path/to/video.mp4 -o /path/to/output.jpg
 ```
 
-Key options: `-i` (image), `-m` (video, required), `-o` (output), `--drop-metadata`, `--use-ffmpeg` / `--use-gst`.
+主要选项：`-i`（图片）、`-m`（视频，必需）、`-o`（输出）、`--drop-metadata`、`--use-ffmpeg` / `--use-gst`。
 
 #### `live-photo-extract`
-
-Extract a live photo:
 
 ```bash
 live-photo-extract -p /path/to/live_photo.jpg -d /path/to/dest
 ```
 
-Extract and export video frames:
+提取并逐帧导出：
 
 ```bash
 live-photo-extract -p /path/to/live_photo.jpg -d /path/to/dest --frame-to-photos -f avif
 ```
 
-Only generate a long exposure photo:
+仅生成长曝光照片：
 
 ```bash
 live-photo-extract -p /path/to/live_photo.jpg -l /path/to/long_exposure.jpg --minimal
 ```
 
-Key options: `-p` (live photo, required), `-d` (output directory), `-i` (image), `-m` (video), `-l` (long exposure), `--frame-to-photos`, `-f` (image format), `-T` (threads), `--minimal`, `--drop-metadata`.
+主要选项：`-p`（动态照片，必需）、`-d`（输出目录）、`-i`（图片）、`-m`（视频）、`-l`（长曝光）、`--frame-to-photos`、`-f`（图片格式）、`-T`（线程数）、`--minimal`、`--drop-metadata`。
 
-ISOBMFF Motion Photos with an `mpvd` box, including Samsung HEIC files, support lossless main-image and video extraction, frame export, and long-exposure generation. Main-image extraction preserves the original metadata, as permitted by the Motion Photo specification. Exporting the main image with `--drop-metadata` is not supported. Use `--minimal` with `-m` to export only the video in that mode:
+对于视频存储在 `mpvd` box 中的 ISOBMFF Motion Photo（包括三星 HEIC 文件），目前支持无损提取静态主图和视频、逐帧导出以及生成长曝光。主图提取会按照 Motion Photo 规范保留原始元数据。使用 `--drop-metadata` 时无法导出主图；如果只需要视频，请配合 `--minimal` 和 `-m` 明确选择视频导出：
 
 ```bash
 live-photo-extract -p /path/to/motion_photo.heic -m /path/to/video.mp4 --minimal
@@ -284,25 +278,23 @@ live-photo-extract -p /path/to/motion_photo.heic -m /path/to/video.mp4 --minimal
 
 #### `live-photo-repair`
 
-Repair a live photo:
-
 ```bash
 live-photo-repair -p /path/to/live_photo.jpg
 ```
 
-Force repair:
+强制修复：
 
 ```bash
 live-photo-repair -p /path/to/live_photo.jpg -f
 ```
 
-Key options: `-p` (live photo, required), `-f` (force), `-s` (manual video size).
+主要选项：`-p`（动态照片，必需）、`-f`（强制）、`-s`（手动指定视频大小）。
 
-Metadata repair currently requires a JPEG-based live photo with an appended video; HEIC/`mpvd` repair is not supported.
+元数据修复目前仅适用于末尾附加视频的 JPEG 动态照片，不支持修复 HEIC/`mpvd` 格式。
 
-#### `live-photo-conv` (Generic Command)
+#### `live-photo-conv`（通用命令）
 
-Operations are similar to the simplified commands but require specifying the mode with `--make`, `--extract`, or `--repair`:
+与简化命令类似，但需用 `--make`、`--extract`、`--repair` 指定模式：
 
 ```bash
 live-photo-conv --make -i /path/to/image.jpg -m /path/to/video.mp4 -p /path/to/output.jpg
@@ -312,136 +304,134 @@ live-photo-conv --repair -p /path/to/live_photo.jpg
 
 #### `copy-img-meta`
 
-Copy all metadata:
-
 ```bash
 copy-img-meta /path/to/source.jpg /path/to/dest.webp
 ```
 
-Exclude certain metadata:
+选择不复制某些元数据：
 
 ```bash
 copy-img-meta --exclude-xmp --exclude-iptc /path/to/source.jpg /path/to/dest.webp
 ```
 
-Key options: `--exclude-exif` / `--with-exif`, `--exclude-xmp` / `--with-xmp`, `--exclude-iptc` / `--with-iptc`.
+主要选项：`--exclude-exif` / `--with-exif`、`--exclude-xmp` / `--with-xmp`、`--exclude-iptc` / `--with-iptc`。
 
 ### `liblivephototools`
 
-* **Warning:** The API of this library may change with future versions.
+* **警告：** 该库的API可能会随着版本的更新而发生变化。
 
-`liblivephototools` is a library for creating and extracting live photos, as well as exporting frames from embedded videos. It can be used in **any** language that supports **GObject Introspection**, such as C, Vala, Rust, C++, Python, etc.
+`liblivephototools` 是一个用于创建和提取动态照片以及从内嵌视频中导出帧的库。它可以在支持 **GObject Introspection** 的**任何**语言中使用，例如 C、Vala、Rust、C++、Python 等。
 
-#### Example
+#### 示例
 
-For example, in Python, make sure the `python-gobject` package has been installed, and then import the library:
+以 Python 为例，确保已经安装了 `python-gobject` 包，然后可以通过以下代码导入库：
 
 ```python
 import gi
-gi.require_version('LivePhotoTools', '0.5') # Adjust according to the actual version number
+gi.require_version('LivePhotoTools', '0.5') # 请根据实际版本号调整
 from gi.repository import LivePhotoTools
 ```
 
-Usage example:
+使用示例：
 
 ```python
-# Load a live photo
+# 加载动态照片
 livephoto = LivePhotoTools.LivePhoto.create("MVIMG_20241104_164717.jpg", None, LivePhotoTools.Backend.AUTO)
-# Extract the static image from the live photo
+# 从动态照片中提取静态图像
 livephoto.export_main_image()
-# Extract the video from the live photo
+# 从动态照片中提取视频
 livephoto.export_video()
-# Export frames from the embedded video
+# 从内嵌视频中导出帧
 livephoto.split_images_from_video(None, None, 0)
-# Convert the live photo to a long exposure photo
+# 将动态照片转换为长曝光照片
 livephoto.generate_long_exposure("long_exposure.jpg")
 ```
 
 ```python
-# Create a live photo
-livemaker = LivePhotoTools.LiveMaker.create('VID_20241104_164717.mp4', 'IMG_20241104_164717.jpg', None, LivePhotoTools.Backend.AUTO)
-# Export
+# 创建动态照片
+livemaker=LivePhotoTools.LiveMaker.create('VID_20241104_164717.mp4', 'IMG_20241104_164717.jpg', None, LivePhotoTools.Backend.AUTO)
+# 导出
 livemaker.export()
 ```
 
-## License
+## 许可证
 
-This project is licensed under the LGPL-2.1-or-later license. For more details, see the `COPYING` file.
+该项目使用 LGPL-2.1-or-later 许可证。详细信息请参阅 [`COPYING`](COPYING) 文件。
 
 ## FAQ
 
-### Exporting Images from Embedded Videos: Using FFmpeg or GStreamer?
+### 由嵌入视频导出图片：用 FFmpeg 还是用 GStreamer？
 
-If GStreamer support is enabled during the build, GStreamer will be used by default to export images from embedded videos. Otherwise, the program will attempt to create an FFmpeg subprocess via command to export images. Even with GStreamer support enabled, you can use the `--use-ffmpeg` option to use FFmpeg.
+如果在构建时启用了 GStreamer 支持，那么默认将使用 GStreamer 来从嵌入视频中导出图片。否则，程序将直接尝试通过命令的方式创建 FFmpeg 子进程来导出图片。在启用了 GStreamer 支持的情况下，也可以通过 `--use-ffmpeg` 选项来使用 FFmpeg。
 
-In general, the default GStreamer backend provides high-speed encoding; only when exporting to PNG is it recommended to add `--use-ffmpeg` (FFmpeg's PNG encoding is noticeably faster). The `-T`/`--threads` option only affects the GStreamer path.
+一般情况下，默认的 GStreamer 后端可提供高速的编码，仅在导出 PNG 时建议使用 `--use-ffmpeg`（FFmpeg 的 PNG 编码明显更快）。`-T`/`--threads` 选项只对 GStreamer 路径有效。
 
-### Path Encoding on Windows: Unable to Read/Write Metadata for Paths Containing Non-ASCII Characters
+### Windows 下的路径编码：无法向包含非 ASCII 字符的路径读取或写入元数据
 
-Due to limitations in Exiv2 and incomplete bindings in GExiv2, it is currently not possible on Windows to read or write metadata for paths that contain non-ASCII characters.
+由于 Exiv2 的限制与 GExiv2 绑定的不完善，目前无法在 Windows 下向包含非 ASCII 字符的路径读取或写入元数据。
 
-### Fragmentation Among Android Manufacturers: Live Photos Not Recognized
+### Android 手机厂商的分裂：无法识别动态照片
 
-Due to the fragmentation among Android phone manufacturers, different vendors may require proprietary metadata in live photos to correctly recognize them. As a result, live photos generated by this tool may not be recognized on some devices.
+由于 Android 手机厂商的分裂，不同厂商还可以需要动态照片中有自己的"私货"元数据才能识别动态照片。可能直接使用本工具生成的动态照片在某些手机上无法识别。
 
-Workarounds:
+解决方案：
 
-* Take a photo (usually not live photo) with a phone from the respective manufacturer.
-* Use `copy-img-meta --exclude-xmp <source_image> <dest_image>` to copy the metadata from that photo to the generated live photo.
-* If the phone recognizes the live photo but fails to play it, repair the live photo using the `live-photo-conv` tool:
-  * For example, run `live-photo-conv --repair -p /path/to/live_photo.jpg`
-  * Or force a repair with `live-photo-conv --force-repair -p /path/to/live_photo.jpg`
-  * In rare cases where the repair still fails, you can try specifying the embedded video size using `live-photo-conv --repair-with-video-size=SIZE -p /path/to/live_photo.jpg` (usually not necessary)
+* 使用对应厂商的手机拍摄一张普通照片
+* 使用 `copy-img-meta --exclude-xmp <source_image> <dest_image>` 将这张照片的元数据复制到生成的动态照片上
+* 如果在手机上发现能识别但无法播放，使用 `live-photo-conv` 工具修复动态照片
+  * 例如，使用 `live-photo-conv --repair -p /path/to/live_photo.jpg`
+  * 或者强制修复 `live-photo-conv --force-repair -p /path/to/live_photo.jpg`
+  * 极少数情况下如果仍然无法修复，可以尝试指定嵌入视频大小 `live-photo-conv --repair-with-video-size=SIZE -p /path/to/live_photo.jpg` （一般情况下不需要）
 
-You can also copy the metadata to the ordinary photo used to create the live photo beforehand, and then use the `live-photo-conv` tool to create the live photo (recommended):
+也可以事先先将元数据复制到用来制作动态照片的普通照片上，然后再使用 `live-photo-conv` 工具创建动态照片（推荐）：
 
 ```bash
 copy-img-meta --exclude-xmp /path/to/source.jpg /path/to/dest.jpg
 live-photo-conv --make --image /path/to/dest.jpg --video /path/to/video.mp4 --live-photo /path/to/output.jpg
 ```
 
-This way, you can obtain a live photo that is recognized and playable on the respective brand's phone.
+这样可以一次性得到可以在对应品牌的手机上正常识别的动态照片。
 
-## Contributing
+## 贡献
 
-### Code Contributions
+### 代码贡献
 
-This project uses [Meson](https://mesonbuild.com/) as the build system and is primarily written in **Vala**. See [Manual Build](#manual-build) for build instructions. [Pull requests](https://github.com/wszqkzqk/live-photo-conv/pulls) should target the `main` branch.
+本项目使用 [Meson](https://mesonbuild.com/) 构建系统，主要使用 **Vala** 语言。构建方法参见 [手动构建](#手动构建)。[Pull Request](https://github.com/wszqkzqk/live-photo-conv/pulls) 请提交至 `main` 分支。
 
-### Translations
+### 翻译
 
-Translations are managed on [Hosted Weblate](https://hosted.weblate.org/projects/live-photo-conv/). Please use Weblate rather than opening pull requests for translation changes.
+翻译在 [Hosted Weblate](https://hosted.weblate.org/projects/live-photo-conv/) 上管理。请使用 Weblate 贡献翻译，不要提交翻译内容的 Pull Request。
 
-[![Translation status](https://hosted.weblate.org/widget/live-photo-conv/multi-auto.svg)](https://hosted.weblate.org/projects/live-photo-conv/)
-## Changes in this fork
+[![翻译状态](https://hosted.weblate.org/widget/live-photo-conv/multi-auto.svg)](https://hosted.weblate.org/projects/live-photo-conv/)
+## 本 fork 的改动
 
-A few adjustments on top of 0.51.0. They are listed here because upstream may not take all of them.
+在 0.51.0 基础上做了几处调整，上游不一定全部接受，列在这里备查。
 
-### Motion Photo 1.0 compliance
+### Motion Photo 1.0 合规
 
-The spec's reader pattern requires the file name stem to end with `MP`, and `Item:Mime` may only be `video/mp4` or `video/quicktime`. The original code satisfied neither:
+规范里的读取器匹配规则要求文件名主干以 `MP` 结尾，`Item:Mime` 只能是 `video/mp4` 或 `video/quicktime`。原来的实现两处都不满足：
 
-- Output name is `MVIMG_<stem>MP.jpg` instead of `MVIMG_<stem>.jpg`
-- `Item:Mime` is probed from the source `ftyp` brand, `.mov` becomes `video/quicktime` (same in the repair path)
-- `MotionPhotoPresentationTimestampUs` is written as `0` instead of `-1` — camera files always carry a value, and some galleries skip the motion badge on `-1`
-- Unreadable source metadata now warns instead of aborting the export
+- 输出名从 `MVIMG_<名字>.jpg` 改为 `MVIMG_<名字>MP.jpg`
+- `Item:Mime` 改为读源文件 `ftyp` 的 brand，`.mov` 写 `video/quicktime`（修复功能同样处理）
+- `MotionPhotoPresentationTimestampUs` 写 `0` 而不是 `-1`——真机文件都是有效数值，部分相册列表读到 `-1` 就不标动态
+- 源文件元数据读不出来时只打警告，不再中断整个导出
 
-### Target device
+### 目标设备
 
-`--brand` on the command line, "Target device" in the GUI:
+命令行加 `--brand`，图形界面里是「目标设备」下拉：
 
-| Value | Extra nodes |
+| 取值 | 写入的私有字段 |
 |---|---|
-| `google` (default) | none, standard Motion Photo 1.0 + MicroVideo V1 |
-| `oppo` | `OpCamera`: `MotionPhotoOwner="oplus"`, `OLivePhotoVersion="2"`, `VideoLength`, … |
-| `vivo` | `VCamera`: `VMotionPhotoVersion`, `VMotionPhotoSource`, `VMediaKitVersion` |
-| `xiaomi` | MicroVideo V1 only, no MotionPhoto / Container nodes |
+| `google`（默认） | 无，标准 Motion Photo 1.0 + MicroVideo V1 |
+| `oppo` | `OpCamera`：`MotionPhotoOwner="oplus"`、`OLivePhotoVersion="2"`、`VideoLength` 等 |
+| `vivo` | `VCamera`：`VMotionPhotoVersion`、`VMotionPhotoSource`、`VMediaKitVersion` |
+| `xiaomi` | 只写 MicroVideo V1，**不写** MotionPhoto / Container 节点 |
 
-Field names come from real device output, not from guessing. Xiaomi files carry no `Camera:MotionPhoto` node at all.
+字段名取自真机文件，不是按规范猜的。小米真机里根本没有 `Camera:MotionPhoto` 节点。
 
-### Interface
+### 界面
 
-- Fixed 570×810 window, not resizable, no maximise button
-- Estimated output size row (video bytes + still image)
+- 窗口固定 570×810，不能拖大、没有最大化按钮
+- 「结果」里显示预计输出大小（视频字节数 + 静态图）
 
-Filed upstream as PR [#85](https://github.com/wszqkzqk/live-photo-conv/pull/85) (compliance) and [#86](https://github.com/wszqkzqk/live-photo-conv/pull/86) (target device).
+已向上游提交 PR [#85](https://github.com/wszqkzqk/live-photo-conv/pull/85)（合规）和 [#86](https://github.com/wszqkzqk/live-photo-conv/pull/86)（目标设备）。

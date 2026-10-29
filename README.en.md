@@ -1,0 +1,447 @@
+# Live Photo Converter
+
+<div align="center">
+  <img src="assets/logo.svg" alt="Live Photo Converter" style="width: 500px; max-width: 100%;" />
+</div>
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wszqkzqk/live-photo-conv)
+
+* [中文版本](README.md)
+
+> **Fork notes** — this branch carries a few changes on top of 0.51.0, see "Changes in this fork" at the end.
+
+Live Photo Converter is a cross-platform tool for processing live photos, providing an easy-to-use and modern GUI based on GTK4 / LibAdwaita, CLI, and function library.
+
+It can combine a static image and a video into a live photo, convert a video directly into a live photo, repair live photos that fail to parse due to broken metadata, extract the static image and video from a live photo, or export every frame of the video as an image, and supports converting live photos to long exposure photos.
+
+## Features
+
+- `live-photo-conv-gtk`
+  - **Graphical interface** for making, extracting and repairing live photos (GTK4 / LibAdwaita)
+- `live-photo-make`
+  - **Create** live photos from images and videos
+- `live-photo-extract`
+  - Extract images, videos, and **video frames** from live photos
+  - Convert live photos to **long exposure photos**
+- `live-photo-repair`
+  - **Repair** corrupted live photos
+- `live-photo-conv`
+  - A comprehensive command for creating, extracting, converting, and repairing live photos
+- `copy-img-meta`
+  - Copy metadata from one image to another
+  - Choose whether to include or exclude EXIF, XMP, and IPTC metadata
+- `liblivephototools`
+  - A library that provides functions for creating and extracting live photos, as well as exporting frames from videos
+  - The library can be used in **any** language that supports **GObject Introspection**
+
+## Background [(Chinese Introduction)](https://wszqkzqk.github.io/2024/08/01/%E8%A7%A3%E6%9E%90Android%E7%9A%84%E5%8A%A8%E6%80%81%E7%85%A7%E7%89%87/)
+
+Android live photos are a gradually popularizing media file format that combines a video with audio and a static image to form a live photo. This type of photo is supported on various devices, such as Google's Pixel series, Samsung's Galaxy series, and most models from manufacturers like Xiaomi.
+
+In the common JPEG-based form, an Android live photo appends a video file directly to the end of a static image. This video file contains both audio and video streams. The position of the video file is marked using `XMP` metadata, allowing quick location of the video file during parsing. The advantage of this format is that it adds dynamic effects to the image without altering the original image. Since this extension is not a standard for image formats, such images will only be displayed as static images in unsupported image viewers. The Android Motion Photo specification also defines an `mpvd` box for ISOBMFF images such as HEIC and AVIF. Samsung uses this structure and may add vendor-specific `sefd` metadata.
+
+This tool can be used for extracting, repairing, editing, and composing such live photos.
+
+## Easy Installation
+
+### Android (Experimental)
+
+Download the APK for your device's ABI from [GitHub Releases](https://github.com/wszqkzqk/live-photo-conv/releases) and install it (you may need to allow your browser or file manager to install apps from unknown sources):
+
+* `*-android-arm64-v8a.apk`
+  * Most modern phones and tablets
+* `*-android-x86_64.apk`
+  * x86 devices and emulators
+* `*-android-universal.apk`
+  * Works on all supported ABIs, but larger in size
+
+On Android, only the graphical interface is provided, and video processing is handled by a statically linked GStreamer backend. Android 12 or later is required.
+
+### Windows (MSYS2)
+
+For Windows users, [the package](https://packages.msys2.org/base/mingw-w64-live-photo-conv) is already available in the **[MSYS2 official repository](https://www.msys2.org/)**. Make sure you have MSYS2 installed and updated, then you can install it directly with `pacman` (UCRT64 as an example):
+
+```bash
+pacman -S mingw-w64-ucrt-x86_64-live-photo-conv
+```
+
+### Arch Linux
+
+On Arch Linux, you can install directly from the AUR using an AUR helper like `paru`:
+
+```bash
+paru -S live-photo-conv
+```
+
+Alternatively, you can manually clone the AUR repository and build/install:
+
+```bash
+git clone https://aur.archlinux.org/live-photo-conv.git
+cd live-photo-conv
+makepkg -si
+```
+
+### Flatpak
+
+Download the `.flatpak` bundle from [GitHub Releases](https://github.com/wszqkzqk/live-photo-conv/releases) and install (recommended):
+
+```bash
+flatpak install --user live-photo-conv*.flatpak
+```
+
+To build directly from source with flatpak-builder:
+
+```bash
+git clone https://github.com/wszqkzqk/live-photo-conv.git
+cd live-photo-conv
+flatpak install --user flathub org.gnome.Sdk//50 org.gnome.Platform//50
+flatpak-builder --user --install --force-clean build-flatpak com.github.wszqkzqk.live-photo-conv.yml
+flatpak run com.github.wszqkzqk.live-photo-conv
+```
+
+### macOS (Homebrew)
+
+On macOS, install from this repository as a Homebrew tap:
+
+```bash
+brew tap wszqkzqk/live-photo-conv https://github.com/wszqkzqk/live-photo-conv
+HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew install --HEAD wszqkzqk/live-photo-conv/live-photo-conv
+```
+
+## Manual Build
+
+### Dependencies
+
+* Build Dependencies
+  * Meson, Vala, GExiv2
+  * GTK4, LibAdwaita (optional, for the GUI)
+  * GStreamer (`gstreamer`, `gst-plugins-base-libs`) — optional, for exporting images from videos; FFmpeg used otherwise
+  * gdk-pixbuf2 — optional, same as above
+  * gobject-introspection — optional, for generating GObject Introspection data
+* Runtime Dependencies
+  * GLib (GObject, GIO), GExiv2
+  * GTK4, LibAdwaita (required by the GUI)
+  * GStreamer (`gstreamer`, `gst-plugins-base-libs`, `gst-plugins-good`, `gst-plugins-bad`) — required when built with GStreamer; `gst-plugin-va` optional, for hardware acceleration
+  * gdk-pixbuf2 — required when built with GStreamer; optional format loaders: `libavif` (.avif), `libheif` (.heif/.heic/.avif), `libjxl` (.jxl), `webp-pixbuf-loader` (.webp)
+  * FFmpeg (8.0 or later) — optional, required when not built with GStreamer and need to export images from videos
+
+For example, to install dependencies on Arch Linux:
+
+```bash
+sudo pacman -S --needed glib2 gexiv2 meson vala gtk4 libadwaita gstreamer gst-plugins-base-libs gdk-pixbuf2 gobject-introspection gst-plugins-good gst-plugins-bad gst-plugin-va
+```
+
+To install dependencies on Debian/Ubuntu:
+
+```bash
+sudo apt install build-essential meson valac libgexiv2-dev libglib2.0-dev libgtk-4-dev libadwaita-1-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgdk-pixbuf-2.0-dev gobject-introspection libgirepository1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-vaapi
+```
+
+To install dependencies on macOS with Homebrew:
+
+```bash
+brew install meson vala pkgconf glib gexiv2 gtk4 libadwaita adwaita-icon-theme gstreamer gdk-pixbuf gobject-introspection ffmpeg help2man
+```
+
+To install dependencies on Windows by MSYS2 (UCRT64 environment):
+
+```bash
+pacman -S --needed mingw-w64-ucrt-x86_64-glib2 mingw-w64-ucrt-x86_64-cc  mingw-w64-ucrt-x86_64-gexiv2 mingw-w64-ucrt-x86_64-meson mingw-w64-ucrt-x86_64-vala mingw-w64-ucrt-x86_64-gtk4 mingw-w64-ucrt-x86_64-libadwaita mingw-w64-ucrt-x86_64-gstreamer mingw-w64-ucrt-x86_64-gst-plugins-base mingw-w64-ucrt-x86_64-gdk-pixbuf2 mingw-w64-ucrt-x86_64-gobject-introspection mingw-w64-ucrt-x86_64-gst-plugins-good mingw-w64-ucrt-x86_64-gst-plugins-bad
+```
+
+### Compilation
+
+Use Meson and Ninja to build the project. When configuring the build with Meson, it automatically detects whether GStreamer is supported and whether GObject Introspection information can be generated.
+
+Meson build options:
+
+* `gst`
+  * Whether to enable GStreamer
+  * Possible values are `auto`, `enabled`, `disabled`. Default is `auto`.
+* `gir`
+  * Whether to generate GObject Introspection information
+  * Possible values are `auto`, `enabled`, `disabled`. Default is `auto`.
+* `gui`
+  * Whether to build the GTK4/LibAdwaita GUI
+  * Possible values are `auto`, `enabled`, `disabled`. Default is `auto`.
+* `docs`
+  * Whether to generate documentation
+  * Possible values are `auto`, `enabled`, `disabled`. Default is `auto`.
+* `manpages`
+  * Whether to generate manpages
+  * Possible values are `auto`, `enabled`, `disabled`. Default is `auto`.
+
+First, you need to clone the project and navigate to the top-level directory of the project. The following reference commands should be executed in the **top-level directory of the project**:
+
+```bash
+git clone https://github.com/wszqkzqk/live-photo-conv.git
+cd live-photo-conv
+```
+
+You can configure the build with the following command:
+
+```bash
+meson setup builddir --buildtype=release
+```
+
+If you do not want to generate GObject Introspection information, for example, you can disable it with the following command:
+
+```bash
+meson setup builddir --buildtype=release -D gir=disabled
+```
+
+Then compile the project:
+
+```bash
+meson compile -C builddir
+```
+
+Install the project:
+
+```bash
+meson install -C builddir
+```
+
+## Usage
+
+### `live-photo-conv-gtk` (GUI)
+
+The graphical interface provides an intuitive way to make, extract and repair live photos without using the command line. Launch it from your application launcher or terminal:
+
+```bash
+live-photo-conv-gtk
+```
+
+Three tabs cover all operations:
+
+* **Make** — combine a video (and optional image) into a live photo. Drag files or click to browse, then click the button to choose where to save.
+
+  <p align="center"><img src="screenshots/make-ui.webp" alt="Make tab" width="300" /></p>
+
+* **Extract** — select a live photo, tick what to export (main image, video, long exposure, frames), choose an output directory. Supports **batch processing** of multiple live photos.
+
+  <p align="center"><img src="screenshots/extract-ui.webp" alt="Extract tab" width="300" /></p>
+
+* **Repair** — fix corrupted XMP metadata in a live photo. Advanced options for manual video size are available if needed. Supports **batch processing** of multiple live photos.
+
+  <p align="center"><img src="screenshots/repair-ui.webp" alt="Repair tab" width="300" /></p>
+
+### CLI Tools
+
+To simplify common tasks, this project provides three streamlined command-line tools, which are symbolic links to `live-photo-conv` but offer a more concise and focused set of options for specific tasks:
+
+* `live-photo-make`: Create live photos from images and videos.
+* `live-photo-extract`: Extract images, videos, and video frames from live photos.
+* `live-photo-repair`: Repair corrupted live photos.
+* `live-photo-conv`: A comprehensive command for all features.
+* `copy-img-meta`: Copy metadata between images.
+
+Run any command with `--help` to see all available options.
+
+#### `live-photo-make`
+
+Create a live photo:
+
+```bash
+live-photo-make -i /path/to/image.jpg -m /path/to/video.mp4 -o /path/to/output.jpg
+```
+
+Convert a video directly to a live photo:
+
+```bash
+live-photo-make -m /path/to/video.mp4 -o /path/to/output.jpg
+```
+
+Key options: `-i` (image), `-m` (video, required), `-o` (output), `--drop-metadata`, `--use-ffmpeg` / `--use-gst`.
+
+#### `live-photo-extract`
+
+Extract a live photo:
+
+```bash
+live-photo-extract -p /path/to/live_photo.jpg -d /path/to/dest
+```
+
+Extract and export video frames:
+
+```bash
+live-photo-extract -p /path/to/live_photo.jpg -d /path/to/dest --frame-to-photos -f avif
+```
+
+Only generate a long exposure photo:
+
+```bash
+live-photo-extract -p /path/to/live_photo.jpg -l /path/to/long_exposure.jpg --minimal
+```
+
+Key options: `-p` (live photo, required), `-d` (output directory), `-i` (image), `-m` (video), `-l` (long exposure), `--frame-to-photos`, `-f` (image format), `-T` (threads), `--minimal`, `--drop-metadata`.
+
+ISOBMFF Motion Photos with an `mpvd` box, including Samsung HEIC files, support lossless main-image and video extraction, frame export, and long-exposure generation. Main-image extraction preserves the original metadata, as permitted by the Motion Photo specification. Exporting the main image with `--drop-metadata` is not supported. Use `--minimal` with `-m` to export only the video in that mode:
+
+```bash
+live-photo-extract -p /path/to/motion_photo.heic -m /path/to/video.mp4 --minimal
+```
+
+#### `live-photo-repair`
+
+Repair a live photo:
+
+```bash
+live-photo-repair -p /path/to/live_photo.jpg
+```
+
+Force repair:
+
+```bash
+live-photo-repair -p /path/to/live_photo.jpg -f
+```
+
+Key options: `-p` (live photo, required), `-f` (force), `-s` (manual video size).
+
+Metadata repair currently requires a JPEG-based live photo with an appended video; HEIC/`mpvd` repair is not supported.
+
+#### `live-photo-conv` (Generic Command)
+
+Operations are similar to the simplified commands but require specifying the mode with `--make`, `--extract`, or `--repair`:
+
+```bash
+live-photo-conv --make -i /path/to/image.jpg -m /path/to/video.mp4 -p /path/to/output.jpg
+live-photo-conv --extract -p /path/to/live_photo.jpg -d /path/to/dest
+live-photo-conv --repair -p /path/to/live_photo.jpg
+```
+
+#### `copy-img-meta`
+
+Copy all metadata:
+
+```bash
+copy-img-meta /path/to/source.jpg /path/to/dest.webp
+```
+
+Exclude certain metadata:
+
+```bash
+copy-img-meta --exclude-xmp --exclude-iptc /path/to/source.jpg /path/to/dest.webp
+```
+
+Key options: `--exclude-exif` / `--with-exif`, `--exclude-xmp` / `--with-xmp`, `--exclude-iptc` / `--with-iptc`.
+
+### `liblivephototools`
+
+* **Warning:** The API of this library may change with future versions.
+
+`liblivephototools` is a library for creating and extracting live photos, as well as exporting frames from embedded videos. It can be used in **any** language that supports **GObject Introspection**, such as C, Vala, Rust, C++, Python, etc.
+
+#### Example
+
+For example, in Python, make sure the `python-gobject` package has been installed, and then import the library:
+
+```python
+import gi
+gi.require_version('LivePhotoTools', '0.5') # Adjust according to the actual version number
+from gi.repository import LivePhotoTools
+```
+
+Usage example:
+
+```python
+# Load a live photo
+livephoto = LivePhotoTools.LivePhoto.create("MVIMG_20241104_164717.jpg", None, LivePhotoTools.Backend.AUTO)
+# Extract the static image from the live photo
+livephoto.export_main_image()
+# Extract the video from the live photo
+livephoto.export_video()
+# Export frames from the embedded video
+livephoto.split_images_from_video(None, None, 0)
+# Convert the live photo to a long exposure photo
+livephoto.generate_long_exposure("long_exposure.jpg")
+```
+
+```python
+# Create a live photo
+livemaker = LivePhotoTools.LiveMaker.create('VID_20241104_164717.mp4', 'IMG_20241104_164717.jpg', None, LivePhotoTools.Backend.AUTO)
+# Export
+livemaker.export()
+```
+
+## License
+
+This project is licensed under the LGPL-2.1-or-later license. For more details, see the `COPYING` file.
+
+## FAQ
+
+### Exporting Images from Embedded Videos: Using FFmpeg or GStreamer?
+
+If GStreamer support is enabled during the build, GStreamer will be used by default to export images from embedded videos. Otherwise, the program will attempt to create an FFmpeg subprocess via command to export images. Even with GStreamer support enabled, you can use the `--use-ffmpeg` option to use FFmpeg.
+
+In general, the default GStreamer backend provides high-speed encoding; only when exporting to PNG is it recommended to add `--use-ffmpeg` (FFmpeg's PNG encoding is noticeably faster). The `-T`/`--threads` option only affects the GStreamer path.
+
+### Path Encoding on Windows: Unable to Read/Write Metadata for Paths Containing Non-ASCII Characters
+
+Due to limitations in Exiv2 and incomplete bindings in GExiv2, it is currently not possible on Windows to read or write metadata for paths that contain non-ASCII characters.
+
+### Fragmentation Among Android Manufacturers: Live Photos Not Recognized
+
+Due to the fragmentation among Android phone manufacturers, different vendors may require proprietary metadata in live photos to correctly recognize them. As a result, live photos generated by this tool may not be recognized on some devices.
+
+Workarounds:
+
+* Take a photo (usually not live photo) with a phone from the respective manufacturer.
+* Use `copy-img-meta --exclude-xmp <source_image> <dest_image>` to copy the metadata from that photo to the generated live photo.
+* If the phone recognizes the live photo but fails to play it, repair the live photo using the `live-photo-conv` tool:
+  * For example, run `live-photo-conv --repair -p /path/to/live_photo.jpg`
+  * Or force a repair with `live-photo-conv --force-repair -p /path/to/live_photo.jpg`
+  * In rare cases where the repair still fails, you can try specifying the embedded video size using `live-photo-conv --repair-with-video-size=SIZE -p /path/to/live_photo.jpg` (usually not necessary)
+
+You can also copy the metadata to the ordinary photo used to create the live photo beforehand, and then use the `live-photo-conv` tool to create the live photo (recommended):
+
+```bash
+copy-img-meta --exclude-xmp /path/to/source.jpg /path/to/dest.jpg
+live-photo-conv --make --image /path/to/dest.jpg --video /path/to/video.mp4 --live-photo /path/to/output.jpg
+```
+
+This way, you can obtain a live photo that is recognized and playable on the respective brand's phone.
+
+## Contributing
+
+### Code Contributions
+
+This project uses [Meson](https://mesonbuild.com/) as the build system and is primarily written in **Vala**. See [Manual Build](#manual-build) for build instructions. [Pull requests](https://github.com/wszqkzqk/live-photo-conv/pulls) should target the `main` branch.
+
+### Translations
+
+Translations are managed on [Hosted Weblate](https://hosted.weblate.org/projects/live-photo-conv/). Please use Weblate rather than opening pull requests for translation changes.
+
+[![Translation status](https://hosted.weblate.org/widget/live-photo-conv/multi-auto.svg)](https://hosted.weblate.org/projects/live-photo-conv/)
+## Changes in this fork
+
+A few adjustments on top of 0.51.0. They are listed here because upstream may not take all of them.
+
+### Motion Photo 1.0 compliance
+
+The spec's reader pattern requires the file name stem to end with `MP`, and `Item:Mime` may only be `video/mp4` or `video/quicktime`. The original code satisfied neither:
+
+- Output name is `MVIMG_<stem>MP.jpg` instead of `MVIMG_<stem>.jpg`
+- `Item:Mime` is probed from the source `ftyp` brand, `.mov` becomes `video/quicktime` (same in the repair path)
+- `MotionPhotoPresentationTimestampUs` is written as `0` instead of `-1` — camera files always carry a value, and some galleries skip the motion badge on `-1`
+- Unreadable source metadata now warns instead of aborting the export
+
+### Target device
+
+`--brand` on the command line, "Target device" in the GUI:
+
+| Value | Extra nodes |
+|---|---|
+| `google` (default) | none, standard Motion Photo 1.0 + MicroVideo V1 |
+| `oppo` | `OpCamera`: `MotionPhotoOwner="oplus"`, `OLivePhotoVersion="2"`, `VideoLength`, … |
+| `vivo` | `VCamera`: `VMotionPhotoVersion`, `VMotionPhotoSource`, `VMediaKitVersion` |
+| `xiaomi` | MicroVideo V1 only, no MotionPhoto / Container nodes |
+
+Field names come from real device output, not from guessing. Xiaomi files carry no `Camera:MotionPhoto` node at all.
+
+### Interface
+
+- Fixed 570×810 window, not resizable, no maximise button
+- Estimated output size row (video bytes + still image)
+
+Filed upstream as PR [#85](https://github.com/wszqkzqk/live-photo-conv/pull/85) (compliance) and [#86](https://github.com/wszqkzqk/live-photo-conv/pull/86) (target device).
