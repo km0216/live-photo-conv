@@ -64,6 +64,10 @@ public abstract class LivePhotoConv.LiveMaker : Object {
             stem = stem[5:];
         else if (stem.has_prefix (source_prefix))
             stem = stem[source_prefix.length:];
+        // Motion Photo 1.0 requires the file name stem to end with "MP";
+        // readers may otherwise ignore the XMP metadata and the appended video.
+        if (!stem.has_suffix ("MP"))
+            stem += "MP";
         return Path.build_filename (Path.get_dirname (source_path), "MVIMG" + stem + ".jpg");
     }
 
