@@ -149,7 +149,10 @@ public abstract class LivePhotoConv.LiveMaker : Object {
             video_size = this.export_with_video_only ();
         }
 
-        string presentation_timestamp_us_to_write = "-1";
+        // Real camera output always carries a usable timestamp; -1 is spec-legal
+        // but several vendor galleries then refuse to flag the file as a motion
+        // photo in their list view
+        string presentation_timestamp_us_to_write = "0";
         string? existing_motion_photo_ts = null;
         string? existing_gcamera_ts = null;
 
