@@ -138,6 +138,24 @@ public abstract class LivePhotoConv.LiveMaker : Object {
      *
      * @throws Error if there is an error during the process.
     */
+    /**
+     * Opens a source file for metadata reuse, tolerating unreadable metadata.
+     *
+     * Re-exporting the source metadata is optional, so a file whose metadata
+     * Exiv2 rejects ("corrupted image metadata") must not abort the export.
+     */
+    protected void open_source_metadata (string path) {
+        try {
+            this.metadata.open_path (path);
+        } catch (Error e) {
+            Reporter.warning ("MetadataWarning",
+                "Cannot read metadata from `%s' (%s); exporting without it", path, e.message);
+            try {
+                this.metadata.clear ();
+            } catch (Error ignored) {}
+        }
+    }
+
     public void export () throws Error {
         int64 video_size = 0;
         // Only video/mp4 and video/quicktime are valid, so the declaration has
@@ -232,7 +250,7 @@ public abstract class LivePhotoConv.LiveMaker : Object {
     }
 
     inline int64 export_with_main_image () throws Error {
-        this.metadata.open_path (main_image_path);
+        this.open_source_metadata (main_image_path);
         if (!this._export_original_metadata) {
             // Need to manually clear the metadata if it's not to be exported
             // Because the main image including the metadata is fully copied
