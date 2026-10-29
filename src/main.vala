@@ -41,6 +41,7 @@ class LivePhotoConv.Main {
     static bool minimal_export = false;
     static int threads = 0;
     static Backend backend = Backend.AUTO;
+    static Brand brand = Brand.GOOGLE;
 
     static bool opt_use_ffmpeg (string name, string? val, void* data) throws OptionError {
         backend = Backend.FFMPEG;
@@ -49,6 +50,11 @@ class LivePhotoConv.Main {
 
     static bool opt_use_gst (string name, string? val, void* data) throws OptionError {
         backend = Backend.GST;
+        return true;
+    }
+
+    static bool opt_brand (string name, string? val, void* data) throws OptionError {
+        brand = Brand.from_string (val);
         return true;
     }
 
@@ -64,6 +70,7 @@ class LivePhotoConv.Main {
         { "drop-metadata", '\0', OptionFlags.REVERSE, OptionArg.NONE, ref export_metadata, "Do not export metadata", null },
         { "use-ffmpeg", '\0', OptionFlags.NO_ARG, OptionArg.CALLBACK, (void*) opt_use_ffmpeg, "Use FFmpeg to make instead of GStreamer", null },
         { "use-gst", '\0', OptionFlags.NO_ARG, OptionArg.CALLBACK, (void*) opt_use_gst, "Use GStreamer to make instead of FFmpeg", null },
+        { "brand", '\0', OptionFlags.NONE, OptionArg.CALLBACK, (void*) opt_brand, "Target vendor XMP flavour: google (default), oppo, vivo, xiaomi", "BRAND" },
         null
     };
 
@@ -122,6 +129,7 @@ class LivePhotoConv.Main {
         { "threads", 'T', OptionFlags.NONE, OptionArg.INT, ref threads, "Number of threads to use for extracting, 0 for auto (not work in FFmpeg mode)", "NUM" },
         { "use-ffmpeg", '\0', OptionFlags.NO_ARG, OptionArg.CALLBACK, (void*) opt_use_ffmpeg, "Use FFmpeg instead of GStreamer", null },
         { "use-gst", '\0', OptionFlags.NO_ARG, OptionArg.CALLBACK, (void*) opt_use_gst, "Use GStreamer instead of FFmpeg", null },
+        { "brand", '\0', OptionFlags.NONE, OptionArg.CALLBACK, (void*) opt_brand, "Target vendor XMP flavour: google (default), oppo, vivo, xiaomi", "BRAND" },
         null
     };
 
@@ -264,6 +272,7 @@ class LivePhotoConv.Main {
     static void live_photo_make () throws Error {
         var live_maker = LiveMaker.create (video_path, main_image_path, live_photo_path, backend);
         live_maker.export_original_metadata = export_metadata;
+        live_maker.brand = brand;
         live_maker.export ();
     }
 

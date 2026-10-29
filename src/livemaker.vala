@@ -18,6 +18,42 @@
 */
 
 /**
+ * Target vendor flavour of the Container/Camera XMP metadata.
+ *
+ * Google is the open standard (Pixel, Samsung, plus every reader that follows
+ * it). OPPO and vivo only render the motion part when their own private
+ * namespace is present next to the Google one.
+ */
+public enum LivePhotoConv.Brand {
+    GOOGLE,
+    OPPO,
+    VIVO,
+    XIAOMI;
+
+    public static Brand from_string (string? name) {
+        if (name == null || name == "")
+            return GOOGLE;
+        switch (name.down ()) {
+            case "oppo":
+            case "oplus":
+            case "oneplus":
+            case "coloros":
+                return OPPO;
+            case "vivo":
+            case "iqoo":
+            case "originos":
+                return VIVO;
+            case "xiaomi":
+            case "redmi":
+            case "hyperos":
+                return XIAOMI;
+            default:
+                return GOOGLE;
+        }
+    }
+}
+
+/**
  * Live photo maker base class.
  *
  * Provides functionality to create a live photo by combining an optional main image 
@@ -29,6 +65,12 @@ public abstract class LivePhotoConv.LiveMaker : Object {
     protected string? main_image_path = null;
     protected string video_path;
     protected string dest;
+
+    public Brand brand {
+        get;
+        set;
+        default = Brand.GOOGLE;
+    }
 
     public bool make_backup {
         get;
@@ -64,6 +106,10 @@ public abstract class LivePhotoConv.LiveMaker : Object {
             stem = stem[5:];
         else if (stem.has_prefix (source_prefix))
             stem = stem[source_prefix.length:];
+        // Motion Photo 1.0 requires the stem to end with "MP"; otherwise readers
+        // may ignore the XMP metadata and the appended video entirely.
+        if (!stem.has_suffix ("MP"))
+            stem += "MP";
         return Path.build_filename (Path.get_dirname (source_path), "MVIMG" + stem + ".jpg");
     }
 
@@ -134,15 +180,39 @@ public abstract class LivePhotoConv.LiveMaker : Object {
      *
      * @throws Error if there is an error during the process.
     */
+    /**
+     * Opens a source file for metadata reuse, tolerating unreadable metadata.
+     *
+     * Re-exporting the source metadata is optional, so a file whose metadata
+     * Exiv2 rejects ("corrupted image metadata") must not abort the export.
+     */
+    protected void open_source_metadata (string path) {
+        try {
+            this.metadata.open_path (path);
+        } catch (Error e) {
+            Reporter.warning ("MetadataWarning",
+                "Cannot read metadata from `%s' (%s); exporting without it", path, e.message);
+            try {
+                this.metadata.clear ();
+            } catch (Error ignored) {}
+        }
+    }
+
     public void export () throws Error {
         int64 video_size = 0;
+        // Motion Photo 1.0 only allows video/mp4 and video/quicktime for the video
+        // item, so the declaration has to match the source container
+        var video_mime = Utils.detect_video_mime (this.video_path);
         if (this.main_image_path != null) {
             video_size = this.export_with_main_image ();
         } else {
             video_size = this.export_with_video_only ();
         }
 
-        string presentation_timestamp_us_to_write = "-1";
+        // Real camera output (OPPO, vivo, Xiaomi) always carries a usable
+        // timestamp; -1 is spec-legal but several vendor galleries then refuse
+        // to flag the file as a motion photo in the list view.
+        string presentation_timestamp_us_to_write = "0";
         string? existing_motion_photo_ts = null;
         string? existing_gcamera_ts = null;
 
@@ -173,23 +243,49 @@ public abstract class LivePhotoConv.LiveMaker : Object {
         this.metadata.set_tag_string ("Xmp.GCamera.MicroVideoOffset", video_size.to_string ());
         this.metadata.set_tag_string ("Xmp.GCamera.MicroVideoPresentationTimestampUs", presentation_timestamp_us_to_write);
 
-        // Set MotionPhoto (new standard) tags
-        this.metadata.set_tag_string ("Xmp.GCamera.MotionPhoto", "1");
-        this.metadata.set_tag_string ("Xmp.GCamera.MotionPhotoVersion", "1");
-        this.metadata.set_tag_string ("Xmp.GCamera.MotionPhotoPresentationTimestampUs", presentation_timestamp_us_to_write);
-        // Set Container and Item tags for MotionPhoto
-        this.metadata.set_xmp_tag_struct ("Xmp.Container.Directory", GExiv2.StructureType.SEQ);
-        this.metadata.set_tag_string ("Xmp.Container.Directory[1]/Container:Item", "type=Struct");
-        this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item", "type=Struct");
-        // Item 1: Primary Image (assuming JPEG)
-        this.metadata.set_tag_string ("Xmp.Container.Directory[1]/Container:Item/Item:Mime", "image/jpeg");
-        this.metadata.set_tag_string ("Xmp.Container.Directory[1]/Container:Item/Item:Semantic", "Primary");
-        // Item:Padding is optional for JPEG, so we omit it or can set to "0"
-        // this.metadata.set_tag_string ("Xmp.Container.Directory[1]/Container:Item/Item:Padding", "0");
-        // Item 2: Video (assuming MP4)
-        this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Mime", "video/mp4");
-        this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Semantic", "MotionPhoto");
-        this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Length", video_size.to_string ());
+        // The MotionPhoto V2 set. Xiaomi gallery in particular only reads the
+        // MicroVideo V1 tags (real Xiaomi files carry no MotionPhoto node), so
+        // the whole block is skipped for that brand.
+        if (this.brand != Brand.XIAOMI) {
+            this.metadata.set_tag_string ("Xmp.GCamera.MotionPhoto", "1");
+            this.metadata.set_tag_string ("Xmp.GCamera.MotionPhotoVersion", "1");
+            this.metadata.set_tag_string ("Xmp.GCamera.MotionPhotoPresentationTimestampUs", presentation_timestamp_us_to_write);
+            // Set Container and Item tags for MotionPhoto
+            this.metadata.set_xmp_tag_struct ("Xmp.Container.Directory", GExiv2.StructureType.SEQ);
+            this.metadata.set_tag_string ("Xmp.Container.Directory[1]/Container:Item", "type=Struct");
+            this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item", "type=Struct");
+            // Item 1: Primary Image (assuming JPEG)
+            this.metadata.set_tag_string ("Xmp.Container.Directory[1]/Container:Item/Item:Mime", "image/jpeg");
+            this.metadata.set_tag_string ("Xmp.Container.Directory[1]/Container:Item/Item:Semantic", "Primary");
+            // Item:Padding is optional for JPEG, so we omit it or can set to "0"
+            // this.metadata.set_tag_string ("Xmp.Container.Directory[1]/Container:Item/Item:Padding", "0");
+            // Item 2: Video, declared as whatever container the source actually is
+            this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Mime", video_mime);
+            this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Semantic", "MotionPhoto");
+            this.metadata.set_tag_string ("Xmp.Container.Directory[2]/Container:Item/Item:Length", video_size.to_string ());
+        }
+
+        // Vendor extensions: OPPO and vivo only play the motion part when their
+        // own namespace is present alongside the Google one.
+        switch (this.brand) {
+            case Brand.OPPO:
+                GExiv2.Metadata.register_xmp_namespace ("http://ns.oplus.com/photos/1.0/camera/", "OpCamera");
+                this.metadata.set_tag_string ("Xmp.OpCamera.MotionPhotoPrimaryPresentationTimestampUs", presentation_timestamp_us_to_write);
+                this.metadata.set_tag_string ("Xmp.OpCamera.MotionPhotoOwner", "oplus");
+                this.metadata.set_tag_string ("Xmp.OpCamera.OLivePhotoVersion", "2");
+                this.metadata.set_tag_string ("Xmp.OpCamera.MotionPhotoFeatureFlag", "1");
+                this.metadata.set_tag_string ("Xmp.OpCamera.VideoLength", video_size.to_string ());
+                break;
+            case Brand.VIVO:
+                GExiv2.Metadata.register_xmp_namespace ("http://ns.vivo.com/photos/1.0/camera/", "VCamera");
+                this.metadata.set_tag_string ("Xmp.VCamera.VMotionPhotoVersion", "1");
+                this.metadata.set_tag_string ("Xmp.VCamera.VMotionPhotoSource", "1");
+                this.metadata.set_tag_string ("Xmp.VCamera.VMediaKitVersion", "1");
+                break;
+            default:
+                // Google and Xiaomi need no fields beyond the blocks above
+                break;
+        }
 
         try {
             this.metadata.save_file (this.dest);
@@ -222,7 +318,7 @@ public abstract class LivePhotoConv.LiveMaker : Object {
     }
 
     inline int64 export_with_main_image () throws Error {
-        this.metadata.open_path (main_image_path);
+        this.open_source_metadata (main_image_path);
         if (!this._export_original_metadata) {
             // Need to manually clear the metadata if it's not to be exported
             // Because the main image including the metadata is fully copied

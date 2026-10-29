@@ -269,3 +269,103 @@ msgstr "修复预检失败。未修改任何文件。"
 
 #~ msgid "Live Photo Converter"
 #~ msgstr "动态照片转换器"
+
+#: src/gui.vala
+msgid "Target device"
+msgstr "目标设备"
+
+#: src/gui.vala
+msgid "Adds the vendor specific XMP fields that OPPO and vivo galleries need"
+msgstr "写入 OPPO 与 vivo 相册需要的厂商私有 XMP 字段"
+#: src/gui.vala
+msgid "Timeline"
+msgstr "时间轴"
+
+#: src/gui.vala
+msgid "Only the selected range is written into the live photo"
+msgstr "只把选中区段写入实况照片"
+
+#: src/gui.vala
+msgid "Start (s)"
+msgstr "起点（秒）"
+
+#: src/gui.vala
+msgid "End (s)"
+msgstr "终点（秒）"
+
+#: src/gui.vala
+msgid "Cover frame (s)"
+msgstr "封面帧（秒）"
+
+#: src/gui.vala
+msgid "Time inside the selected range used as the still image"
+msgstr "选中区段内用作静态图的时间点"
+
+#: src/gui.vala
+msgid "Estimated size"
+msgstr "预计大小"
+
+#: src/gui.vala
+msgid "unknown"
+msgstr "未知"
+
+#: src/gui.vala
+msgid "empty range"
+msgstr "区段为空"
+#: src/gui.vala
+msgid "Range"
+msgstr "区段"
+
+#: src/gui.vala
+msgid "Selected"
+msgstr "已选区段"
+
+#: src/gui.vala
+msgid "Trim…"
+msgstr "选段…"
+
+#: src/gui.vala
+msgid "Cover"
+msgstr "封面"
+
+#: src/gui.vala
+msgid "Choose…"
+msgstr "选择…"
+
+#: src/gui.vala
+msgid "Result"
+msgstr "结果"
+
+#: src/gui.vala
+msgid "Trim range"
+msgstr "选择区段"
+
+#: src/gui.vala
+msgid "Choose cover frame"
+msgstr "选择封面帧"
+
+#: src/gui.vala
+msgid "Done"
+msgstr "完成"
+#: src/gui.vala
+msgid "Preview"
+msgstr "预览"
+
+#: src/gui.vala
+msgid "Choose cover…"
+msgstr "选择封面…"
+
+#: src/gui.vala
+msgid "No video"
+msgstr "未选视频"
+
+#: src/gui.vala
+msgid "No cover"
+msgstr "未选封面"
+#: src/gui.vala
+msgid "‹ Previous frame"
+msgstr "‹ 上一帧"
+
+#: src/gui.vala
+msgid "Next frame ›"
+msgstr "下一帧 ›"

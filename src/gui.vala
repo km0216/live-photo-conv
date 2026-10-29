@@ -230,6 +230,10 @@ public class LivePhotoConv.Application : Adw.Application {
     private FileDropArea make_video_area;
     private FileDropArea make_image_area;
     private Gtk.CheckButton make_export_metadata_check;
+    private Gtk.DropDown make_brand_dropdown;
+    private Gtk.Label make_size_label;
+
+
     private Gtk.Button make_button;
 
     // Extract page
@@ -298,8 +302,9 @@ public class LivePhotoConv.Application : Adw.Application {
 
         var window = new Adw.ApplicationWindow (this) {
             title = "Live Photo Converter",
+            resizable = false,
             default_width = 520,
-            default_height = 750,
+            default_height = 760,
         };
 
         Gtk.IconTheme.get_for_display (Gdk.Display.get_default ())
@@ -559,7 +564,65 @@ public class LivePhotoConv.Application : Adw.Application {
         return row;
     }
 
-    // ── Make page ──
+    private Adw.ActionRow make_scale_row (string title, Gtk.Scale scale) {
+        var row = new Adw.ActionRow () {
+            title = title,
+            activatable_widget = scale,
+        };
+        row.add_suffix (scale);
+        return row;
+    }
+
+    /**
+     * Output size estimate: the video bytes are copied verbatim, plus the still
+     * image (the picked one, or a first-frame JPEG when none is given).
+     */
+    private void update_estimated_size () {
+        var video = make_video_area.file;
+        if (video == null) {
+            make_size_label.label = "—";
+            return;
+        }
+        try {
+            int64 total = video.query_info ("standard::size",
+                FileQueryInfoFlags.NONE).get_size ();
+            var image = make_image_area.file;
+            if (image != null)
+                total += image.query_info ("standard::size",
+                    FileQueryInfoFlags.NONE).get_size ();
+            else
+                total += 400 * 1024;
+            make_size_label.label = format_bytes (total);
+        } catch (Error e) {
+            make_size_label.label = "—";
+        }
+    }
+
+    private static string format_bytes (int64 bytes) {
+        if (bytes < 1024)
+            return "%lld B".printf (bytes);
+        if (bytes < 1024 * 1024)
+            return "%.1f KB".printf (bytes / 1024.0);
+        return "%.1f MB".printf (bytes / (1024.0 * 1024.0));
+    }
+
+    private Adw.ActionRow make_brand_row (out Gtk.DropDown out_drop) {
+        // Index order must follow the Brand enum: google, oppo, vivo, xiaomi
+        var drop = new Gtk.DropDown.from_strings ({
+            "Google / Android", "OPPO / OnePlus", "vivo / iQOO", "Xiaomi / Redmi",
+        }) {
+            valign = Gtk.Align.CENTER,
+            tooltip_text = _("Adds the vendor specific XMP fields that OPPO and vivo galleries need"),
+        };
+        drop.selected = 0;
+        out_drop = drop;
+        var row = new Adw.ActionRow () {
+            title = _("Target device"),
+            activatable = false,
+        };
+        row.add_suffix (drop);
+        return row;
+    }
 
     private Gtk.Widget build_make_page () {
         var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 0) {
@@ -591,8 +654,12 @@ public class LivePhotoConv.Application : Adw.Application {
         make_video_area.changed.connect (() => {
             if (!working)
                 make_button.sensitive = (make_video_area.files.length > 0);
+            if (!working)
+                update_estimated_size ();
+
         });
         video_col.append (make_video_area);
+
         drop_row.append (video_col);
 
         var image_col = new Gtk.Box (Gtk.Orientation.VERTICAL, 4);
@@ -606,15 +673,39 @@ public class LivePhotoConv.Application : Adw.Application {
             valign = Gtk.Align.FILL,
         };
         image_col.append (make_image_area);
+
         drop_row.append (image_col);
 
         files_group.add (new Adw.ActionRow () { child = drop_row });
         box.append (files_group);
 
+        make_size_label = new Gtk.Label ("—") {
+            css_classes = { "dim-label" },
+        };
+        var size_row = new Adw.ActionRow () { title = _("Estimated size"), activatable = false };
+        size_row.add_suffix (make_size_label);
+        var size_group = make_group (_("Result"));
+        size_group.add (size_row);
+        box.append (size_group);
+
+
+
         var options_group = make_group (_("Options"));
         make_export_metadata_check = null;
+        options_group.add (make_brand_row (out make_brand_dropdown));
         options_group.add (make_check_row (_("Export metadata"), out make_export_metadata_check, true));
         box.append (options_group);
+
+        // Debug hook: preload a source when LIVE_PHOTO_GUI_DEBUG_VIDEO is set
+        var preload = Environment.get_variable ("LIVE_PHOTO_GUI_DEBUG_VIDEO");
+        if (preload != null && preload != "") {
+            var preload_file = File.new_for_path (preload);
+            if (preload_file.query_exists ()) {
+                var preload_list = new GenericArray<File> ();
+                preload_list.add (preload_file);
+                make_video_area.files = preload_list;
+            }
+        }
 
         return box;
     }
@@ -625,7 +716,7 @@ public class LivePhotoConv.Application : Adw.Application {
 
         var dialog = new Gtk.FileDialog () {
             title = _("Save Live Photo As"),
-            initial_name = "MVIMG_live_photo.jpg",
+            initial_name = "MVIMG_live_photoMP.jpg",
         };
         dialog.save.begin (active_window, null, (obj, res) => {
             try {
@@ -649,9 +740,9 @@ public class LivePhotoConv.Application : Adw.Application {
                 } catch (Error e) {
                     show_error_dialog (_("Error"), e.message);
                     return;
-                }
-                bool export_metadata = make_export_metadata_check.active;
+                }                bool export_metadata = make_export_metadata_check.active;
                 maker.export_original_metadata = export_metadata;
+                maker.brand = (Brand) make_brand_dropdown.selected;
 
                 start_work (make_button, _("Processing…"));
 

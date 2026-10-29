@@ -125,6 +125,38 @@ namespace LivePhotoConv.Utils {
     }
 
     /**
+     * Derives the Item:Mime value of an appended video from its ftyp brand.
+     *
+     * Motion Photo 1.0 only allows `video/mp4` and `video/quicktime` for
+     * video items, so a QuickTime source must not be declared as MP4.
+     *
+     * @param path The file holding the video bytes.
+     * @param offset Byte offset of the video in that file (0 for a plain video).
+     * @return "video/quicktime" for a `qt  ` brand, otherwise "video/mp4".
+     */
+    public string detect_video_mime (string path, int64 offset = 0) {
+        try {
+            var input = File.new_for_path (path).read ();
+            if (offset > 0 && !input.seek (offset, SeekType.SET))
+                return "video/mp4";
+
+            var buffer = new uint8[12];
+            size_t bytes_read = 0;
+            if (!input.read_all (buffer, out bytes_read, null) || bytes_read < 12)
+                return "video/mp4";
+
+            var box_type = "%c%c%c%c".printf ((char) buffer[4], (char) buffer[5], (char) buffer[6], (char) buffer[7]);
+            if (box_type != "ftyp")
+                return "video/mp4";
+
+            var brand = "%c%c%c%c".printf ((char) buffer[8], (char) buffer[9], (char) buffer[10], (char) buffer[11]);
+            return brand == "qt  " ? "video/quicktime" : "video/mp4";
+        } catch (Error e) {
+            return "video/mp4";
+        }
+    }
+
+    /**
      * Returns the effective locale directory at runtime.
      */
     public string get_localedir () {
