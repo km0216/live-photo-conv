@@ -1,6 +1,12 @@
 # Live Photo Converter（本 fork）
 
-基于上游 [wszqkzqk/live-photo-conv](https://github.com/wszqkzqk/live-photo-conv) 0.51.0。用法、安装、源码结构完全同上——下面只说这个 fork 改了什么。
+基于上游 [wszqkzqk/live-photo-conv](https://github.com/wszqkzqk/live-photo-conv) 0.51.0。用法、编译、源码结构同上；这个 fork 改了什么、怎么跑，下面写清楚。
+
+## 下载与运行
+
+Windows x64 包在 [Releases](https://github.com/km0216/live-photo-conv/releases)：解压后双击 `live-photo-gui.cmd`。别把 `bin` 里的 exe 单独拷出去，缺同级的 `lib` 与 `share` 起不来。
+
+制作页依赖 `PATH` 里有 `ffmpeg` 与 `ffprobe`（`choco install ffmpeg` 或官方静态版都行）。转换 / 提取 / 修复三页不依赖。
 
 ## 本 fork 的改动
 
@@ -15,9 +21,9 @@
 
 ### 后端
 
-默认 FFmpeg，图形界面和命令行一致；GStreamer 只在显式 `--use-gst` 时用。构建里的 GStreamer 插件集不含常见消费视频的解码器，默认走它会直接报 `missing plug-in`。FFmpeg 后端要求 `ffmpeg` 与 `ffprobe` 在 `PATH` 里。
+默认 FFmpeg，图形界面和命令行一致；GStreamer 只在显式 `--use-gst` 时用。构建里的 GStreamer 插件集不含常见消费视频的解码器，默认走它会直接报 `missing plug-in`。
 
-Windows 分发包另外补了三样东西，缺了同样跑不动：`gspawn-win64-helper*.exe`（GLib 起子进程用，没有就 `Failed to execute helper program`）、`libgstriff-1.0-0.dll` 与 `libgstrtp-1.0-0.dll`（`libgstisomp4` 的依赖，缺了 qtdemux 整个加载失败）。
+Windows 分发包比上游的打包清单多了三样东西，缺了同样跑不动：`gspawn-win64-helper*.exe`（GLib 起子进程用，没有就 `Failed to execute helper program`）、`libgstriff-1.0-0.dll` 与 `libgstrtp-1.0-0.dll`（`libgstisomp4` 的依赖，缺了 qtdemux 整个加载失败）。
 
 ### 目标设备
 
@@ -32,12 +38,31 @@ Windows 分发包另外补了三样东西，缺了同样跑不动：`gspawn-win6
 
 字段名取自真机文件，不是按规范猜的。小米真机里根本没有 `Camera:MotionPhoto` 节点。
 
+### 元数据与隐私
+
+导出默认继承源图的 EXIF / XMP / IPTC，**包括 GPS 坐标与拍摄时间**。自己做图自己用没问题，往外发就等于连位置一起发。要清掉：
+
+```
+live-photo-make.exe -m 视频.mp4 --drop-metadata
+```
+
+单类清理用 `copyimgmeta` 的 `--exclude-exif` / `--exclude-xmp` / `--exclude-iptc`。
+
 ### 界面
 
 - 窗口固定 570×810，不能拖大、没有最大化按钮
 - 「结果」里显示预计输出大小（视频字节数 + 静态图）
 
----
+## 命令行速查
 
-上游 PR：[#85](https://github.com/wszqkzqk/live-photo-conv/pull/85)（合规）、[#86](https://github.com/wszqkzqk/live-photo-conv/pull/86)（目标设备），都还是 CLOSED 未合并，功能只存在于本 fork。
+```
+live-photo-make.exe -m 视频.mp4 [-i 封面.jpg] [-o 输出路径] [--brand=google|oppo|vivo|xiaomi] [--drop-metadata]
+live-photo-extract.exe -p 实况照片.jpg [-d 输出目录]
+live-photo-repair.exe -p 实况照片.jpg
+```
 
+不给 `-o` 时输出 `<视频所在目录>/live_<视频名>MP.jpg`，同名重跑会覆盖。
+
+## 上游 PR
+
+[#85](https://github.com/wszqkzqk/live-photo-conv/pull/85)（合规）、[#86](https://github.com/wszqkzqk/live-photo-conv/pull/86)（目标设备），都是 CLOSED 未合并，功能只存在于本 fork。
