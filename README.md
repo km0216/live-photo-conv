@@ -8,7 +8,7 @@
 
 规范里的读取器匹配规则要求文件名主干以 `MP` 结尾，`Item:Mime` 只能是 `video/mp4` 或 `video/quicktime`。原来的实现两处都不满足：
 
-- 输出名从 `MVIMG_<名字>.jpg` 改为 `MVIMG_<名字>MP.jpg`
+- 输出名改为 `live_<视频名>MP.jpg`：剥掉源名的 `MVIMG`/`IMG`/`VID` 前缀和紧随的 `_`/`-`，主干补齐 `MP` 尾巴；给了主图也按视频取名，图形界面保存框的默认名同样跟随视频
 - `Item:Mime` 改为读源文件 `ftyp` 的 brand，`.mov` 写 `video/quicktime`（修复功能同样处理）
 - `MotionPhotoPresentationTimestampUs` 写 `0` 而不是 `-1`——真机文件都是有效数值，部分相册列表读到 `-1` 就不标动态
 - 源文件元数据读不出来时只打警告，不再中断整个导出
