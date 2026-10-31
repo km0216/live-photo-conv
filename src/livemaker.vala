@@ -89,7 +89,10 @@ public abstract class LivePhotoConv.LiveMaker : Object {
     }
     
     /**
-     * Derives the default destination path: MVIMG_<stem>.jpg next to the source.
+     * Derives the default destination path: live_<stem>MP.jpg next to the source.
+     *
+     * The stem comes from the video file, so one video always maps to one
+     * predictable output name.
      *
      * Only JPEG is supported as the main image format for now (Google also
      * supports "image/heif"/"image/avif", but GExiv2 does not), so the
@@ -106,11 +109,26 @@ public abstract class LivePhotoConv.LiveMaker : Object {
             stem = stem[5:];
         else if (stem.has_prefix (source_prefix))
             stem = stem[source_prefix.length:];
+        // Drop the separator left behind by a stripped camera prefix.
+        while (stem.has_prefix ("_") || stem.has_prefix ("-"))
+            stem = stem[1:];
+        if (stem == "")
+            stem = "photo";
         // Motion Photo 1.0 requires the stem to end with "MP"; otherwise readers
         // may ignore the XMP metadata and the appended video entirely.
         if (!stem.has_suffix ("MP"))
             stem += "MP";
-        return Path.build_filename (Path.get_dirname (source_path), "MVIMG" + stem + ".jpg");
+        return Path.build_filename (Path.get_dirname (source_path), "live_" + stem + ".jpg");
+    }
+
+    /**
+     * Suggests an output file name for the given video: `live_<video stem>MP.jpg`.
+     *
+     * @param video_path The path of the video file.
+     * @return The file name without any directory part.
+     */
+    public static string suggested_basename (string video_path) {
+        return Path.get_basename (default_dest (video_path, "VID"));
     }
 
     /**
@@ -127,9 +145,8 @@ public abstract class LivePhotoConv.LiveMaker : Object {
 
         if (dest != null) {
             this.dest = dest;
-        } else if (main_image_path != null) {
-            this.dest = default_dest (main_image_path, "IMG");
         } else {
+            // Name the export after the video, whether or not a still is given.
             this.dest = default_dest (video_path, "VID");
         }
 

@@ -714,9 +714,14 @@ public class LivePhotoConv.Application : Adw.Application {
         var video_file = make_video_area.file;
         if (video_file == null) return;
 
+        var video_path_hint = video_file.get_path ();
+        string initial_name = "live_videoMP.jpg";
+        if (video_path_hint != null)
+            initial_name = LiveMaker.suggested_basename (video_path_hint);
+
         var dialog = new Gtk.FileDialog () {
             title = _("Save Live Photo As"),
-            initial_name = "MVIMG_live_photoMP.jpg",
+            initial_name = initial_name,
         };
         dialog.save.begin (active_window, null, (obj, res) => {
             try {
