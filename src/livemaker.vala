@@ -157,7 +157,9 @@ public abstract class LivePhotoConv.LiveMaker : Object {
      * Creates a new instance of LiveMaker with the requested backend.
      *
      * The concrete backend class is chosen by the factory; with
-     * {@link Backend.AUTO} GStreamer is preferred when built in.
+     * {@link Backend.FFMPEG} by default: GStreamer only decodes what the
+     * installed plugin set happens to include, which is rarely enough for
+     * arbitrary consumer videos.
      *
      * @param video_path The path to the video file.
      * @param main_image_path The path to the main image file (optional).
@@ -167,7 +169,7 @@ public abstract class LivePhotoConv.LiveMaker : Object {
      * @return The new LiveMaker instance.
      */
     public static LiveMaker create (string video_path, string? main_image_path = null,
-                                    string? dest = null, Backend backend = AUTO) throws Error {
+                                    string? dest = null, Backend backend = FFMPEG) throws Error {
         LiveMaker maker;
 #if ENABLE_GST
         if (backend != Backend.FFMPEG)

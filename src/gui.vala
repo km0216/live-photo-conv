@@ -741,7 +741,10 @@ public class LivePhotoConv.Application : Adw.Application {
                     output_path = output_staged
                         ? staging_output_path (output_file.get_basename () ?? "live-photo.jpg")
                         : output_file.get_path ();
-                    maker = LiveMaker.create (video_path, image_path, output_path);
+                    // The GStreamer backend depends on whatever decoders the
+                    // installed plugin set happens to carry; FFmpeg is the
+                    // dependable path for arbitrary consumer videos.
+                    maker = LiveMaker.create (video_path, image_path, output_path, Backend.FFMPEG);
                 } catch (Error e) {
                     show_error_dialog (_("Error"), e.message);
                     return;

@@ -40,7 +40,9 @@ class LivePhotoConv.Main {
     static bool frame_to_photo = false;
     static bool minimal_export = false;
     static int threads = 0;
-    static Backend backend = Backend.AUTO;
+    // FFmpeg decodes anything; the GStreamer plugin set carried by a build
+    // usually lacks consumer codecs, so it is opt-in via --use-gst.
+    static Backend backend = Backend.FFMPEG;
     static Brand brand = Brand.GOOGLE;
 
     static bool opt_use_ffmpeg (string name, string? val, void* data) throws OptionError {

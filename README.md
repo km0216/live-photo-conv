@@ -13,6 +13,12 @@
 - `MotionPhotoPresentationTimestampUs` 写 `0` 而不是 `-1`——真机文件都是有效数值，部分相册列表读到 `-1` 就不标动态
 - 源文件元数据读不出来时只打警告，不再中断整个导出
 
+### 后端
+
+默认 FFmpeg，图形界面和命令行一致；GStreamer 只在显式 `--use-gst` 时用。构建里的 GStreamer 插件集不含常见消费视频的解码器，默认走它会直接报 `missing plug-in`。FFmpeg 后端要求 `ffmpeg` 与 `ffprobe` 在 `PATH` 里。
+
+Windows 分发包另外补了三样东西，缺了同样跑不动：`gspawn-win64-helper*.exe`（GLib 起子进程用，没有就 `Failed to execute helper program`）、`libgstriff-1.0-0.dll` 与 `libgstrtp-1.0-0.dll`（`libgstisomp4` 的依赖，缺了 qtdemux 整个加载失败）。
+
 ### 目标设备
 
 命令行加 `--brand`，图形界面里是「目标设备」下拉：
