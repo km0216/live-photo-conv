@@ -39,4 +39,5 @@ Windows 分发包另外补了三样东西，缺了同样跑不动：`gspawn-win6
 
 ---
 
-已向上游提交 PR [#85](https://github.com/wszqkzqk/live-photo-conv/pull/85)（合规）和 [#86](https://github.com/wszqkzqk/live-photo-conv/pull/86)（目标设备）。
+上游 PR：[#85](https://github.com/wszqkzqk/live-photo-conv/pull/85)（合规）、[#86](https://github.com/wszqkzqk/live-photo-conv/pull/86)（目标设备），都还是 CLOSED 未合并，功能只存在于本 fork。
+
