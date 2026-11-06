@@ -38,16 +38,6 @@ Windows 分发包比上游的打包清单多了三样东西，缺了同样跑不
 
 字段名取自真机文件，不是按规范猜的。小米真机里根本没有 `Camera:MotionPhoto` 节点。
 
-### 元数据与隐私
-
-导出默认继承源图的 EXIF / XMP / IPTC，**包括 GPS 坐标与拍摄时间**。自己做图自己用没问题，往外发就等于连位置一起发。要清掉：
-
-```
-live-photo-make.exe -m 视频.mp4 --drop-metadata
-```
-
-单类清理用 `copyimgmeta` 的 `--exclude-exif` / `--exclude-xmp` / `--exclude-iptc`。
-
 ### 界面
 
 - 窗口固定 570×810，不能拖大、没有最大化按钮
