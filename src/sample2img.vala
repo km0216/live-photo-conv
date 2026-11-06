@@ -104,7 +104,7 @@ internal class LivePhotoConv.Sample2Img : Object {
         if (metadata != null) {
             export_mutex.lock ();
             try {
-                metadata.save_file (filename);
+                Utils.save_metadata (metadata, filename);
             } catch (Error e) {
                 throw new ExportError.METADATA_EXPORT_ERROR ("Cannot save metadata to `%s': %s", filename, e.message);
             } finally {

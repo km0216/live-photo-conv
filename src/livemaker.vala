@@ -228,6 +228,33 @@ public abstract class LivePhotoConv.LiveMaker : Object {
             video_size = this.export_with_video_only ();
         }
 
+        // A live photo whose main image never reached the file is a bare video
+        // wearing a .jpg name: Windows Photos then refuses it and the mistake is
+        // invisible until much later, so fail loudly here instead.
+        try {
+            uint8[] head = new uint8[2];
+            var probe = File.new_for_commandline_arg (this.dest).read ();
+            var head_len = probe.read (head, null);
+            Utils.log_diagnostic ("export guard: dest=`%s' headline=%d bytes=%s"
+                .printf (this.dest, (int) head_len,
+                    File.new_for_commandline_arg (this.dest)
+                        .query_info ("standard::size", FileQueryInfoFlags.NONE).get_size ().to_string ()));
+            if (head_len < 2 || head[0] != 0xff || head[1] != 0xd8)
+                throw new ExportError.FILE_SAVE_ERROR (
+                    "`%s' does not start with a JPEG main image", this.dest);
+        } catch (IOError e) {
+            throw new ExportError.FILE_SAVE_ERROR ("Cannot read back `%s': %s", this.dest, e.message);
+        }
+
+        // exiv2 silently drops every set_tag_string on a metadata object that has
+        // no backing image, and the video-only path has opened none yet. The
+        // destination already exists here (main image written, video appended).
+        string? bootstrap_alias = null;
+        if (this.main_image_path == null) {
+            this.metadata = new GExiv2.Metadata ();
+            bootstrap_alias = Utils.open_metadata (this.metadata, this.dest);
+        }
+
         // Real camera output (OPPO, vivo, Xiaomi) always carries a usable
         // timestamp; -1 is spec-legal but several vendor galleries then refuse
         // to flag the file as a motion photo in the list view.
@@ -307,9 +334,16 @@ public abstract class LivePhotoConv.LiveMaker : Object {
         }
 
         try {
-            this.metadata.save_file (this.dest);
+            if (!Utils.save_metadata (this.metadata, this.dest))
+                throw new ExportError.METADATA_EXPORT_ERROR ("exiv2 could not encode the XMP tags");
         }  catch (Error e) {
             throw new ExportError.METADATA_EXPORT_ERROR ("Cannot save metadata to `%s': %s", this.dest, e.message);
+        } finally {
+            if (bootstrap_alias != null) {
+                try {
+                    File.new_for_path (bootstrap_alias).delete (null);
+                } catch (Error e) { }
+            }
         }
         Reporter.info_puts ("Exported live photo", this.dest);
     }

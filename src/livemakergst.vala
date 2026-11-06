@@ -76,6 +76,10 @@ internal class LivePhotoConv.LiveMakerGst : LivePhotoConv.LiveMaker {
         video_stream.seek (0, GLib.SeekType.SET);
         Utils.write_stream (video_stream, output_stream);
 
+        // g_file_replace() only renames the staged temporary file over the
+        // destination on close; without this the live photo never appears.
+        output_stream.close ();
+
         return video_size;
     }
 

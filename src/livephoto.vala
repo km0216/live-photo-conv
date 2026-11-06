@@ -53,6 +53,9 @@ public abstract class LivePhotoConv.LivePhoto : Object {
     protected string basename_no_ext;
     protected string extension_name;
     protected string filename;
+    protected string original_filename = "";
+    /** ASCII copy backing this object when the real name is outside the ANSI code page. */
+    protected string? ascii_alias = null;
     protected GExiv2.Metadata metadata;
     protected string dest_dir;
     protected int64 video_offset;
@@ -184,7 +187,19 @@ public abstract class LivePhotoConv.LivePhoto : Object {
         // Probe the container before consulting XMP so that a top-level ftyp
         // is never mistaken for an appended video.
         var mpvd_video = IsoBmff.find_mpvd_video (filename);
-        this.metadata.open_path (filename);
+        this.original_filename = filename;
+        try {
+            this.metadata.open_path (filename);
+        } catch (Error e) {
+            // gexiv2 turns the path into the ANSI code page on Windows, so a name
+            // carrying emoji cannot be opened at all. Such files are read and
+            // written through an ASCII alias, then moved back on commit.
+            if (Utils.path_is_ascii (filename))
+                throw e;
+            this.ascii_alias = Utils.ascii_alias_for_file (filename);
+            this.filename = this.ascii_alias;
+            this.metadata.open_path (this.filename);
+        }
         if (mpvd_video != null) {
             this.layout = Layout.MPVD;
             this.video_offset = mpvd_video.offset;
@@ -420,13 +435,13 @@ public abstract class LivePhotoConv.LivePhoto : Object {
         // Rewrite the metadata: XMP stripped when exporting, dropped entirely otherwise
         try {
             if (export_original_metadata) {
-                this.metadata_for_export ().save_file (main_image_filename);
+                Utils.save_metadata (this.metadata_for_export (), main_image_filename);
             } else {
                 // GExiv2 requires a backing image; load then drop everything
                 var meta = new GExiv2.Metadata ();
                 meta.open_path (this.filename);
                 meta.clear ();
-                meta.save_file (main_image_filename);
+                Utils.save_metadata (meta, main_image_filename);
             }
         } catch (Error e) {
             throw new ExportError.METADATA_EXPORT_ERROR ("Cannot export the metadata to %s: %s", main_image_filename, e.message);
@@ -489,6 +504,46 @@ public abstract class LivePhotoConv.LivePhoto : Object {
      * @throws Error if there is an issue with retrieving the video offset or saving the metadata.
     */
     public void repair_live_metadata (bool force = false, uint manual_video_size = 0) throws Error {
+        try {
+            this.repair_live_metadata_internal (force, manual_video_size);
+        } catch (Error e) {
+            this.drop_ascii_alias ();
+            throw e;
+        }
+        try {
+            this.commit_ascii_alias ();
+        } catch (Error e) {
+            throw new ExportError.METADATA_EXPORT_ERROR (
+                "Repaired the file but cannot write it back to `%s': %s", this.original_filename, e.message);
+        }
+    }
+
+    /** Removes the pending alias copy after a failed operation. */
+    protected void drop_ascii_alias () {
+        if (this.ascii_alias == null)
+            return;
+        var alias = this.ascii_alias;
+        this.ascii_alias = null;
+        this.filename = this.original_filename;
+        try {
+            File.new_for_path (alias).delete (null);
+        } catch (Error e) { }
+    }
+
+    /**
+     * Moves the result of an alias-backed operation back to the real file.
+     *
+     * @throws Error when the result cannot be written back.
+     */
+    protected void commit_ascii_alias () throws Error {
+        if (this.ascii_alias == null)
+            return;
+        Utils.commit_ascii_alias (this.ascii_alias, this.original_filename);
+        this.ascii_alias = null;
+        this.filename = this.original_filename;
+    }
+
+    void repair_live_metadata_internal (bool force = false, uint manual_video_size = 0) throws Error {
         this.ensure_supported (LivePhotoCapabilities.REPAIR);
         var file_size = File.new_for_commandline_arg  (this.filename)
             .query_info ("standard::size", FileQueryInfoFlags.NONE)
@@ -560,13 +615,13 @@ public abstract class LivePhotoConv.LivePhoto : Object {
         this.write_container_tags (offset_string);
 
         // save_file returns false on encode/write failure
-        if (!this.metadata.save_file (this.filename)) {
+        if (!Utils.save_metadata (this.metadata, this.filename)) {
             throw new ExportError.METADATA_EXPORT_ERROR ("Cannot save the metadata to %s", this.filename);
         }
         // exiv2 silently skips a failed XMP encode; verify the key landed
         if (!this.container_length_present ()) {
             this.rebuild_container_tree (offset_string);
-            if (!this.metadata.save_file (this.filename)) {
+            if (!Utils.save_metadata (this.metadata, this.filename)) {
                 throw new ExportError.METADATA_EXPORT_ERROR ("Cannot save the metadata to %s", this.filename);
             }
             if (!this.container_length_present ()) {

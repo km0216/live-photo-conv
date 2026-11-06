@@ -39,6 +39,7 @@ class LivePhotoConv.Main {
     static bool export_metadata = true;
     static bool frame_to_photo = false;
     static bool minimal_export = false;
+    static bool async_export = false;
     static int threads = 0;
     // FFmpeg decodes anything; the GStreamer plugin set carried by a build
     // usually lacks consumer codecs, so it is opt-in via --use-gst.
@@ -52,6 +53,11 @@ class LivePhotoConv.Main {
 
     static bool opt_use_gst (string name, string? val, void* data) throws OptionError {
         backend = Backend.GST;
+        return true;
+    }
+
+    static bool opt_async (string name, string? val, void* data) throws OptionError {
+        async_export = true;
         return true;
     }
 
@@ -73,6 +79,7 @@ class LivePhotoConv.Main {
         { "use-ffmpeg", '\0', OptionFlags.NO_ARG, OptionArg.CALLBACK, (void*) opt_use_ffmpeg, "Use FFmpeg to make instead of GStreamer", null },
         { "use-gst", '\0', OptionFlags.NO_ARG, OptionArg.CALLBACK, (void*) opt_use_gst, "Use GStreamer to make instead of FFmpeg", null },
         { "brand", '\0', OptionFlags.NONE, OptionArg.CALLBACK, (void*) opt_brand, "Target vendor XMP flavour: google (default), oppo, vivo, xiaomi", "BRAND" },
+        { "async", '\0', OptionFlags.NO_ARG, OptionArg.CALLBACK, (void*) opt_async, "Run the export on a background thread (GUI code path)", null },
         null
     };
 
@@ -275,7 +282,24 @@ class LivePhotoConv.Main {
         var live_maker = LiveMaker.create (video_path, main_image_path, live_photo_path, backend);
         live_maker.export_original_metadata = export_metadata;
         live_maker.brand = brand;
-        live_maker.export ();
+        if (async_export) {
+            // Mirrors the GUI, which always exports from a worker thread
+            var loop = new MainLoop ();
+            Error? async_error = null;
+            live_maker.export_async.begin ((obj, res) => {
+                try {
+                    live_maker.export_async.end (res);
+                } catch (Error e) {
+                    async_error = e;
+                }
+                loop.quit ();
+            });
+            loop.run ();
+            if (async_error != null)
+                throw (owned) async_error;
+        } else {
+            live_maker.export ();
+        }
     }
 
     static void live_photo_process () throws Error {

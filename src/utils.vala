@@ -51,16 +51,20 @@ namespace LivePhotoConv.Utils {
      * @param input_stream The input stream to read from.
      * @param output_stream The output stream to write to.
      *
+     * @return The number of bytes copied.
      * @throws IOError if an error occurs while reading from or writing to the streams.
     */
-    public void write_stream (InputStream input_stream, OutputStream output_stream) throws IOError {
+    public int64 write_stream (InputStream input_stream, OutputStream output_stream) throws IOError {
         var buffer = new uint8[BUFFER_SIZE];
         ssize_t bytes_read;
+        int64 total = 0;
         while ((bytes_read = input_stream.read (buffer)) > 0) {
             buffer.length = (int) bytes_read;
             output_stream.write_all (buffer, null);
+            total += bytes_read;
             buffer.length = BUFFER_SIZE;
         }
+        return total;
     }
 
     /**
@@ -153,6 +157,166 @@ namespace LivePhotoConv.Utils {
             return brand == "qt  " ? "video/quicktime" : "video/mp4";
         } catch (Error e) {
             return "video/mp4";
+        }
+    }
+
+    /**
+     * Whether every byte of the path is plain ASCII.
+     *
+     * ASCII is a strict subset of every ANSI code page, so a path that passes
+     * this test is always safe to hand to exiv2 on Windows.
+     */
+    public bool path_is_ascii (string path) {
+        unowned uint8[] bytes = (uint8[]) path.data;
+        for (int i = 0; i < bytes.length; i++) {
+            if (bytes[i] > 0x7e)
+                return false;
+        }
+        return true;
+    }
+
+    [CCode (cname = "lpc_run_hidden")]
+    extern static int run_program_hidden ([CCode (array_length = false, array_null_terminated = true)] string[] argv,
+                                          string? stderr_path);
+
+    /**
+     * Runs an external program to completion without opening a console window.
+     *
+     * A GUI process that spawns a console program (ffmpeg) makes Windows
+     * allocate a console, which flashes a black window for every export and
+     * leaves the child's standard handles unreliable. The platform layer
+     * starts it with CREATE_NO_WINDOW and sends stderr to a file instead.
+     *
+     * @param argv Argument vector; argv[0] is looked up in PATH.
+     * @param stderr_path File that receives the child's stderr, or null.
+     * @return The exit status, or -1 when the program could not be started.
+     */
+    public int run_hidden (string[] argv, string? stderr_path = null) {
+        return run_program_hidden (argv, stderr_path);
+    }
+
+    /**
+     * Appends a diagnostic line to `live-photo-conv.log` in the temp directory.
+     *
+     * Exports run inside the GUI where stderr is invisible, so the export
+     * pipeline records what it actually wrote where it can be read afterwards.
+     *
+     * @param message The line to record.
+     */
+    public void log_diagnostic (string message) {
+        try {
+            var path = Path.build_filename (Environment.get_tmp_dir (), "live-photo-conv.log");
+            var stream = FileStream.open (path, "a");
+            if (stream != null) {
+                stream.puts ("%s %s\n".printf (new DateTime.now_local ().format ("%H:%M:%S.%f"), message));
+                stream.flush ();
+            }
+        } catch (Error e) { }
+    }
+
+    /**
+     * Copies a file to an ASCII-only alias next to it.
+     *
+     * Windows builds of exiv2/gexiv2 cannot touch a path that the ANSI code
+     * page cannot represent, so operations on such files go through a hidden
+     * alias and the result is moved back afterwards.
+     *
+     * @param path The file to alias.
+     * @return The alias path.
+     * @throws Error when the copy fails.
+     */
+    public string ascii_alias_for_file (string path) throws Error {
+        var dir_name = Path.get_dirname (path);
+        var base_name = Path.get_basename (path);
+        var dot = base_name.last_index_of_char ('.');
+        var suffix = dot > 0 ? base_name.substring (dot) : ".jpg";
+        var alias = Path.build_filename (dir_name,
+            ".live-photo-conv-alias-%08x%s".printf (Random.int_range (0, 0x7fffffff), suffix));
+        File.new_for_path (path).copy (File.new_for_path (alias), FileCopyFlags.OVERWRITE, null, null);
+        return alias;
+    }
+
+    /**
+     * Copies an alias back over the original file and removes the alias.
+     *
+     * @param alias The alias path.
+     * @param path The original path.
+     * @throws Error when the copy back fails; the alias is removed either way.
+     */
+    public void commit_ascii_alias (string alias, string path) throws Error {
+        File.new_for_path (alias).copy (File.new_for_path (path), FileCopyFlags.OVERWRITE, null, null);
+        try {
+            File.new_for_path (alias).delete (null);
+        } catch (Error e) { }
+    }
+
+    /**
+     * Opens metadata from a file, tolerating names outside the ANSI code page.
+     *
+     * exiv2 refuses every tag write on a metadata object that has no backing
+     * image, so the destination has to be opened before tagging. When its name
+     * cannot be represented in the ANSI code page the file is opened through an
+     * ASCII alias and the caller deletes the returned alias afterwards.
+     *
+     * @param metadata The metadata object to load into.
+     * @param path The file to open.
+     * @return The alias path to delete later, or null when the real path was used.
+     * @throws Error when the file cannot be opened.
+     */
+    public string? open_metadata (GExiv2.Metadata metadata, string path) throws Error {
+        if (path_is_ascii (path)) {
+            metadata.open_path (path);
+            return null;
+        }
+        var alias = ascii_alias_for_file (path);
+        try {
+            metadata.open_path (alias);
+        } catch (Error e) {
+            try {
+                File.new_for_path (alias).delete (null);
+            } catch (Error ignored) { }
+            throw e;
+        }
+        return alias;
+    }
+
+    /**
+     * Saves GExiv2 metadata, tolerating destination names outside the ANSI code page.
+     *
+     * On Windows gexiv2 maps the UTF-8 path with g_win32_locale_filename_from_utf8(),
+     * so a destination containing emoji or other non-ANSI characters fails with
+     * "Failed to convert ... to locale ...". The file is then copied to an ASCII
+     * temporary name in the same directory, the tags are written there, and the
+     * bytes are copied back, which keeps the appended video and every tag intact.
+     *
+     * @param metadata The metadata to write.
+     * @param path The destination file.
+     * @return true on success, false when exiv2 could not encode the tags.
+     * @throws Error when the file could not be copied or written.
+     */
+    public bool save_metadata (GExiv2.Metadata metadata, string path) throws Error {
+        if (path_is_ascii (path))
+            return metadata.save_file (path);
+
+        var dir_name = Path.get_dirname (path);
+        var base_name = Path.get_basename (path);
+        var dot = base_name.last_index_of_char ('.');
+        var suffix = dot > 0 ? base_name.substring (dot) : ".jpg";
+        var tmp_path = Path.build_filename (dir_name,
+            ".live-photo-conv-meta-%08x%s".printf (Random.int_range (0, 0x7fffffff), suffix));
+
+        var source = File.new_for_path (path);
+        var target = File.new_for_path (tmp_path);
+        try {
+            source.copy (target, FileCopyFlags.OVERWRITE, null, null);
+            if (!metadata.save_file (tmp_path))
+                return false;
+            target.copy (source, FileCopyFlags.OVERWRITE, null, null);
+            return true;
+        } finally {
+            try {
+                target.delete (null);
+            } catch (Error e) { }
         }
     }
 
